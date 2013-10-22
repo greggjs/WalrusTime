@@ -4,13 +4,12 @@
 
 package theviolator;
 
-import connect4.MiniMaxConnect4Player;
 import breakthrough.*;
 import game.*;
 
-public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
+public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	protected final int MAX_DEPTH = 50;
-	protected final int MAX_SCORE = 12 * BreakthroughState.N
+	protected final static int MAX_SCORE = 12 * BreakthroughState.N
 			* BreakthroughState.N + 1;
 	protected int depthLimit;
 	protected ScoredBreakthroughMove[] stack;
@@ -79,7 +78,22 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 	}
 
 	protected static int evalBoard(BreakthroughState state) {
-		return 0;
+		int score = 0;
+		for (int r = 0; r < BreakthroughState.N; r++) {
+			for (int c = 0; c < BreakthroughState.N; c++) {
+				if (state.board[r][c] == BreakthroughState.homeSym) {
+					score += (r+1);
+				} else if (state.board[r][c] == BreakthroughState.awaySym) {
+					score -= (BreakthroughState.N-r);
+				}
+			}
+		}
+		
+		if (Math.abs(score) > MAX_SCORE) {
+			System.err.println("Problem with eval");
+			System.exit(0);
+		}
+		return score;
 	}
 
 	private void minimax(BreakthroughState brd, int currDepth) {
