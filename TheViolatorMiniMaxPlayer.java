@@ -2,25 +2,72 @@
  * 
  */
 
-package theviolator;
-
-import connect4.MiniMaxConnect4Player;
+package breakthrough.WalrusTime;
 import breakthrough.*;
 import game.*;
 
 public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
-	protected final int MAX_DEPTH = 50;
-	protected final int MAX_SCORE = 12 * BreakthroughState.N
-			* BreakthroughState.N + 1;
+	public static int N = BreakthroughState.N;
+	protected static final int MAX_DEPTH = 50;
+	protected static final int MAX_SCORE = 2 * N * N * N + 1; // Why?
 	protected int depthLimit;
+	
+	// stack is where the search procedure places it's move recommendation.
+	// If the search is at depth, d, the move is stored on stack[d].
+	// This was done to help efficiency (i.e., reduce number constructor calls)
 	protected ScoredBreakthroughMove[] stack;
-
+	
+	/**
+	 * Constructor. Calls parent GamePlayer constructor
+	 */
 	public TheViolatorMiniMaxPlayer(String nickname, int depthLimit) {
 		super(nickname, new BreakthroughState(), false);
 		this.depthLimit = depthLimit;
 		// TODO Auto-generated constructor stub
 	}
+	
 
+	/**
+	 * A function that essentially counts the number of pieces a particular
+	 * player has on the board, giving more weight to pieces that are closer to
+	 * the opposite side of the board
+	 * @param brd Breakthrough board to be examined
+	 * @param who 'W' or 'B'
+	 * @return an integer representing current status of who
+	 */
+	private static int eval(BreakthroughState brd, char who){
+		boolean home = (who == BreakthroughState.homeSym);
+		int eval = 0;
+		for(int r = 0; r < N; r++){
+			for(int c = 0; c < N; c++){
+				if((brd.board[r][c] == who)){
+					if(home){
+						eval += r*r;
+					}
+					else{
+						eval += (N-r)*(N-r);
+					}
+				}
+			}
+		}
+		return eval;
+	}
+	
+	/**
+	 * The evaluation function
+	 * @param brd board to be evaluated
+	 * @return White evaluation - Black evaluation
+	 */
+	public static int evalBoard(BreakthroughState brd)
+	{ 
+		int score = eval(brd, BreakthroughState.homeSym) - eval(brd, BreakthroughState.awaySym);
+		if (Math.abs(score) > MAX_SCORE) {
+			System.err.println("Problem with eval");
+			System.exit(0);
+		}
+		return score;
+	}
+	
 	/**
 	 * 
 	 * @author Jake Gregg, Carly Schaeffer, Xi Chen
@@ -61,6 +108,14 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 			m = new ScoredBreakthroughMove(0, 0, 0, 0, 0);
 	}
 
+	/**
+	 * Determines if a board represents a completed game. If it is, the
+	 * evaluation values for these boards is recorded (i.e., 0 for a draw
+	 * +X, for a HOME win and -X for an AWAY win.
+	 * @param brd Breakthrough board to be examined
+	 * @param mv where to place the score information; column is irrelevant
+	 * @return true if the brd is a terminal state
+	 */
 	protected boolean terminalValue(GameState state,
 			ScoredBreakthroughMove mv) {
 		GameState.Status status = state.getStatus();
@@ -76,10 +131,6 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 			isTerminal = false;
 		}
 		return isTerminal;
-	}
-
-	protected static int evalBoard(BreakthroughState state) {
-		return 0;
 	}
 
 	private void minimax(BreakthroughState brd, int currDepth) {
