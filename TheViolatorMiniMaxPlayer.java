@@ -12,12 +12,15 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	protected final static int MAX_SCORE = 12 * BreakthroughState.N
 			* BreakthroughState.N + 1;
 	protected int depthLimit;
+	
+	// stack is where the search procedure places it's move recommendation.
+	// If the search is at depth, d, the move is stored on mvStack[d].
+	// This was done to help efficiency (i.e., reduce number constructor calls)
 	protected ScoredBreakthroughMove[] stack;
 
 	public TheViolatorMiniMaxPlayer(String nickname, int depthLimit) {
 		super(nickname, new BreakthroughState(), false);
 		this.depthLimit = depthLimit;
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -25,6 +28,8 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	 * @author Jake Gregg, Carly Schaeffer, Xi Chen
 	 * 
 	 */
+	
+	// A BreakthroughMove with a scored (how well it evaluates)
 	protected class ScoredBreakthroughMove extends
 			breakthrough.BreakthroughMove {
 		protected double score;
@@ -46,20 +51,32 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	}
 
 	protected static void shuffle(int[] cols) {
-		for (int i = 0; i < cols.length; i++) {
-			int val1 = Util.randInt(0, cols.length);
+		int len = cols.length;
+		for (int i = 0; i < len; i++) {
+			int val1 = Util.randInt(i, len-1);
 			int swap = cols[i];
 			cols[i] = cols[val1];
 			cols[val1] = swap;
 		}
 	}
 
+	/**
+	 * Initializes the stack of Moves.
+	 */
 	public void init() {
 		stack = new ScoredBreakthroughMove[MAX_DEPTH];
 		for (ScoredBreakthroughMove m : stack)
 			m = new ScoredBreakthroughMove(0, 0, 0, 0, 0);
 	}
 
+	/**
+	 * Determines if a board represents a completed game. If it is, the
+	 * evaluation values for these boards is recorded (i.e., 0 for a draw
+	 * +X, for a HOME win and -X for an AWAY win.
+	 * @param state breakthrough board to be examined
+	 * @param mv where to place the score information; column is irrelevant
+	 * @return true if the state is a terminal state
+	 */
 	protected boolean terminalValue(GameState state,
 			ScoredBreakthroughMove mv) {
 		GameState.Status status = state.getStatus();
@@ -77,6 +94,11 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 		return isTerminal;
 	}
 
+	/**
+	 * The evaluation function
+	 * @param state board to be evaluated
+	 * @return Black evaluation - Red evaluation
+	 */
 	protected static int evalBoard(BreakthroughState state) {
 		int score = 0;
 		for (int r = 0; r < BreakthroughState.N; r++) {
@@ -87,8 +109,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 					score -= (BreakthroughState.N-r);
 				}
 			}
-		}
-		
+		}	
 		if (Math.abs(score) > MAX_SCORE) {
 			System.err.println("Problem with eval");
 			System.exit(0);
@@ -96,6 +117,12 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 		return score;
 	}
 
+	/**
+	 * Performs the a depth limited minimax algorithm. It leaves it's
+	 * move recommendation at stack[currDepth]. 
+	 * @param brd current board state
+	 * @param currDepth current depth in the search
+	 */
 	private void minimax(BreakthroughState brd, int currDepth) {
 		boolean toMaximize = (brd.getWho() == GameState.Who.HOME);
 		boolean isTerminal = terminalValue(brd, stack[currDepth]);
@@ -129,11 +156,11 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 					curr.endingRow = r;
 					char prevPiece = brd.board[r][c];
 					if (brd.moveOK(curr)) {
-					
+						// Make move on board
 						brd.makeMove(curr);
-					
+					    // Check out worth of this move
 						minimax(brd, currDepth+1);
-					
+					    // Undo the move
 						brd.board[r][c] = prevPiece;
 						brd.numMoves--;
 						brd.status = GameState.Status.GAME_ON;
@@ -160,7 +187,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	
 	public static void main(String[] args) {
 		int depth = 6;
-		GamePlayer p = new TheViolatorMiniMaxPlayer("The Violator is " + depth + " deep in your mother", depth);
+		GamePlayer p = new TheViolatorMiniMaxPlayer("The Violator is " + depth, depth);
 		p.compete(args);
 	}
 
