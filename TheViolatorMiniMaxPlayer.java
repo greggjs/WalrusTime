@@ -4,6 +4,9 @@
 
 package theviolator;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 import breakthrough.*;
 import game.*;
 
@@ -31,7 +34,12 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	// A BreakthroughMove with a scored (how well it evaluates)
 	protected class ScoredBreakthroughMove extends
 			breakthrough.BreakthroughMove {
-		protected double score;
+		public double score;
+		
+		protected ScoredBreakthroughMove() {
+			super(0, 0, 0, 0);
+			score = 0;
+		}
 
 		protected ScoredBreakthroughMove(int r1, int c1, int r2,
 				int c2, double s) {
@@ -49,15 +57,15 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 		}
 	}
 
-	protected static void shuffle(int[] cols) {
-		int len = cols.length;
-		for (int i = 0; i < len; i++) {
-			int val1 = Util.randInt(i, len-1);
-			int swap = cols[i];
-			cols[i] = cols[val1];
-			cols[val1] = swap;
-		}
-	}
+//	protected static void shuffle(int[] cols) {
+//		int len = cols.length;
+//		for (int i = 0; i < len; i++) {
+//			int val1 = Util.randInt(i, len-1);
+//			int swap = cols[i];
+//			cols[i] = cols[val1];
+//			cols[val1] = swap;
+//		}
+//	}
 
 	/**
 	 * Initializes the stack of Moves.
@@ -94,8 +102,8 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	}
 	
 	/**
-	 * For homeSym, each checker has the score with the value of its row value;
-	 * For awaySym, each checker has the score with the value of its N-r-1 value;
+	 * For homeSym, each checker has the score with the value of its row+1 value;
+	 * For awaySym, each checker has the score with the value of its N-r value;
 	 * player's piece. 
 	 * @param brd board to be evaluated
 	 * @param who 'B' or 'W'
@@ -109,7 +117,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 				if (brd.board[r][c] == BreakthroughState.homeSym) {
 					score += (r + 1);
 				} else if (brd.board[r][c] == BreakthroughState.awaySym) {
-					score -= (BreakthroughState.N - r);
+					score += (BreakthroughState.N - r);
 				}
 			}
 		}
@@ -139,6 +147,39 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 		}
 		return score;
 	}
+	
+	/**
+	 * Get an ArrayList of all possible moves in a given state.
+	 * Adapted from getMove() in RandomBreakthroughPlayer.java
+	 * @param state
+	 * @return
+	 */
+	protected ArrayList<ScoredBreakthroughMove> getPossibleMoves(GameState state) {
+		BreakthroughState board = (BreakthroughState)state;
+		ArrayList<ScoredBreakthroughMove> list = new ArrayList<ScoredBreakthroughMove>();
+		ScoredBreakthroughMove mv = new ScoredBreakthroughMove(0, 0, 0, 0, 0);
+		int dir = state.who == GameState.Who.HOME ? +1 : -1;
+		for (int r=0; r<BreakthroughState.N; r++) {
+			for (int c=0; c<BreakthroughState.N; c++) {
+				mv.startRow = r;
+				mv.startCol = c;
+				mv.endingRow = r+dir; 
+				mv.endingCol = c;
+				if (board.moveOK(mv)) {
+					list.add((ScoredBreakthroughMove)mv.clone());
+				}
+				mv.endingRow = r+dir; mv.endingCol = c+1;
+				if (board.moveOK(mv)) {
+					list.add((ScoredBreakthroughMove)mv.clone());
+				}
+				mv.endingRow = r+dir; mv.endingCol = c-1;
+				if (board.moveOK(mv)) {
+					list.add((ScoredBreakthroughMove)mv.clone());
+				}
+			}
+		}
+		return list;
+	}
 
 	/**
 	 * Performs the a depth limited minimax algorithm. It leaves it's
@@ -154,7 +195,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 			;
 		} else if (currDepth == depthLimit) {
 			stack[currDepth].setScore(0, 0, 0, 0, evalBoard(brd));
-		} else {
+		} else {  
 			ScoredBreakthroughMove curr = new ScoredBreakthroughMove(
 					0, 0, 0, 0, 0);
 			double bestScore = (toMaximize ? Double.NEGATIVE_INFINITY
@@ -164,40 +205,29 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 			bestMove.setScore(0, 0, 0, 0, bestScore);
 			GameState.Who currTurn = brd.getWho();
 			
-			int[] cols = new int[BreakthroughState.N];
-			int[] rows = new int[BreakthroughState.N];
-			for (int i = 0; i < cols.length; i++) {
-				cols[i] = i;
-				rows[i] = i;
-			}
-			shuffle(cols); shuffle(rows);
-			for (int i = 0; i < cols.length; i++) {
-				for (int j = 0; j < rows.length; j++) {
-					int c = cols[i];
-					int r = rows[j];
-					curr.endingCol = c;
-					curr.endingRow = r;
-					char prevPiece = brd.board[r][c];
-					if (brd.moveOK(curr)) {
-						// Make move on board
-						brd.makeMove(curr);
-					    // Check out worth of this move
-						minimax(brd, currDepth+1);
-					    // Undo the move
-						brd.board[r][c] = prevPiece;
-						brd.numMoves--;
-						brd.status = GameState.Status.GAME_ON;
-				    	brd.who = currTurn;
-				    	
-				    	if (toMaximize && nextMove.score > bestMove.score) {
-							bestMove.setScore(nextMove.startRow, nextMove.startCol, r, c, nextMove.score);
-						} else if (!toMaximize && nextMove.score < bestMove.score) {
-							bestMove.setScore(nextMove.startRow, nextMove.startCol, r, c, nextMove.score);
-						}
-					}
+			ArrayList<ScoredBreakthroughMove> allMv = getPossibleMoves(brd);
+			Collections.shuffle(allMv);
+			char prevPiece = '\0';
+			for (int i = 0; i < allMv.size(); i++) {
+				curr = allMv.get(i); // moveOK(curr) is always true
+				prevPiece = brd.board[curr.endingRow][curr.endingCol];
+
+				// Make move on board
+				brd.makeMove(curr);
+				// Check out worth of this move
+				minimax(brd, currDepth+1);
+				// Undo the move
+				brd.board[curr.endingRow][curr.endingCol] = prevPiece;
+				brd.numMoves--;
+				brd.status = GameState.Status.GAME_ON;
+		    	brd.who = currTurn;
+		    	
+		    	if (toMaximize && nextMove.score > bestMove.score) {
+					bestMove.setScore(nextMove.startRow, nextMove.startCol, curr.endingRow, curr.endingCol, nextMove.score);
+				} else if (!toMaximize && nextMove.score < bestMove.score) {
+					bestMove.setScore(nextMove.startRow, nextMove.startCol, curr.endingRow, curr.endingCol, nextMove.score);
 				}
 			}
-
 		}
 	}
 
@@ -210,7 +240,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	
 	public static void main(String[] args) {
 		int depth = 10;
-		GamePlayer p = new TheViolatorMiniMaxPlayer("The Violator is " + depth, depth);
+		GamePlayer p = new TheViolatorMiniMaxPlayer("The Violator is " + depth + " AUTO", depth);
 		p.compete(args);
 	}
 
