@@ -12,7 +12,7 @@ import game.*;
 
 public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	protected final int MAX_DEPTH = 50;
-	protected final static int MAX_SCORE = 4 * (BreakthroughState.N + 1)^2;
+	protected final static int MAX_SCORE = 4 * (BreakthroughState.N + 1) * (BreakthroughState.N + 1);
 	protected int depthLimit;
 	
 	// stack is where the search procedure places it's move recommendation.
@@ -166,15 +166,17 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 				mv.endingRow = r+dir; 
 				mv.endingCol = c;
 				if (board.moveOK(mv)) {
-					list.add((ScoredBreakthroughMove)mv.clone());
+					//Object mv1 = mv.clone();
+					//list.add((ScoredBreakthroughMove)mv1);
+					list.add(new ScoredBreakthroughMove(mv.startRow,mv.startCol, mv.endingRow, mv.endingCol, mv.score));
 				}
 				mv.endingRow = r+dir; mv.endingCol = c+1;
 				if (board.moveOK(mv)) {
-					list.add((ScoredBreakthroughMove)mv.clone());
+					list.add(new ScoredBreakthroughMove(mv.startRow,mv.startCol, mv.endingRow, mv.endingCol, mv.score));
 				}
 				mv.endingRow = r+dir; mv.endingCol = c-1;
 				if (board.moveOK(mv)) {
-					list.add((ScoredBreakthroughMove)mv.clone());
+					list.add(new ScoredBreakthroughMove(mv.startRow,mv.startCol, mv.endingRow, mv.endingCol, mv.score));
 				}
 			}
 		}
@@ -239,9 +241,13 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	}
 	
 	public static void main(String[] args) {
-		int depth = 10;
+		int depth = 1;
 		GamePlayer p = new TheViolatorMiniMaxPlayer("The Violator is " + depth + " AUTO", depth);
 		p.compete(args);
+//		p.init();
+//		BreakthroughState st = new BreakthroughState();
+//		GameMove mv = p.getMove(st, "");
+//		System.out.println(mv.toString());
 	}
 
 }
