@@ -224,7 +224,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	}
 	
 	public static void main(String[] args) {
-		int depth = 4;
+		int depth = 5;
 		GamePlayer p = new TheViolatorMiniMaxPlayer("The Violator is " + depth + " AUTO", depth);
 		p.compete(args);
 	}

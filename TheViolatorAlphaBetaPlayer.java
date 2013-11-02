@@ -1,4 +1,8 @@
 package theviolator;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import theviolator.TheViolatorMiniMaxPlayer.ScoredBreakthroughMove;
 import breakthrough.*;
 import game.*;
 
@@ -22,72 +26,50 @@ public class TheViolatorAlphaBetaPlayer extends TheViolatorMiniMaxPlayer {
 										double alpha, double beta)
 	{
 		boolean toMaximize = (brd.getWho() == GameState.Who.HOME);
-		boolean toMinimize = !toMaximize;
-
 		boolean isTerminal = terminalValue(brd, stack[currDepth]);
+		boolean toMinimize = !toMaximize;
 		
 		if (isTerminal) {
 			;
 		} else if (currDepth == depthLimit) {
 			stack[currDepth].setScore(0, 0, 0, 0, evalBoard(brd));
-		} else {
-			ScoredBreakthroughMove curr = new ScoredBreakthroughMove(0, 0, 0, 0, 0);
-
-			double bestScore = (toMaximize ? 
-					Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY);
+		} else {  
+			ScoredBreakthroughMove curr = new ScoredBreakthroughMove(
+					0, 0, 0, 0, 0);
+			double bestScore = (toMaximize ? Double.NEGATIVE_INFINITY
+					: Double.POSITIVE_INFINITY);
 			ScoredBreakthroughMove bestMove = stack[currDepth];
-			ScoredBreakthroughMove nextMove = stack[currDepth+1];
-
+			ScoredBreakthroughMove nextMove = stack[currDepth + 1];
 			bestMove.setScore(0, 0, 0, 0, bestScore);
-			GameState.Who currTurn = brd.getWho();
-
-			int[] cols = new int[BreakthroughState.N];
-			int[] rows = new int[BreakthroughState.N];
-			int len = cols.length;
-			for (int i = 0; i < len; i++) {
-				cols[i] = i;
-				rows[i] = i;
-			}
-			shuffle(cols); shuffle(rows);
-			for (int i = 0; i < len; i++) {
-				for (int j = 0; j < len; j++) {
-					int c = cols[i];
-					int r = rows[j];
-					curr.endingCol = c;
-					curr.endingRow = r;
-					char prevPiece = brd.board[r][c];
-					if (brd.moveOK(curr)) {
-						// Make move on board
-						brd.makeMove(curr);
-						
-					    // Check out worth of this move			
-						alphaBeta(brd, currDepth+1, alpha, beta);	
-						
-						// Undo move
-						brd.board[r][c] = prevPiece;
-						brd.numMoves--;
-						brd.status = GameState.Status.GAME_ON;
-						brd.who = currTurn;
-						
-						// Check out the results, relative to what we've seen before
-						if (toMaximize && nextMove.score > bestMove.score) {
-							bestMove.setScore(nextMove.startRow, nextMove.startCol, r, c, nextMove.score);
-						} else if (!toMaximize && nextMove.score < bestMove.score) {
-							bestMove.setScore(nextMove.startRow, nextMove.startCol, r, c, nextMove.score);
-						}
-	
-						// Update alpha and beta. Perform pruning, if possible.
-						if (toMinimize) {
-							beta = Math.min(bestMove.score, beta);
-							if (bestMove.score <= alpha || bestMove.score == -MAX_SCORE) {
-								return;
-							}
-						} else {
-							alpha = Math.max(bestMove.score, alpha);
-							if (bestMove.score >= beta || bestMove.score == MAX_SCORE) {
-								return;
-							}
-						}
+			
+			ArrayList<ScoredBreakthroughMove> allMv = getPossibleMoves(brd);
+			Collections.shuffle(allMv);
+			BreakthroughState preState;
+			for (int i = 0; i < allMv.size(); i++) {
+				curr = allMv.get(i); // moveOK(curr) is always true
+				preState = (BreakthroughState)brd.clone();
+				// Make move on board
+				brd.makeMove(curr);
+				// Check out worth of this move
+				alphaBeta(brd, currDepth+1, alpha, beta);
+				// Undo the move
+				brd = preState;
+		    	
+		    	if (toMaximize && nextMove.score > bestMove.score) {
+					bestMove.setScore(curr.startRow, curr.startCol, curr.endingRow, curr.endingCol, nextMove.score);
+				} else if (!toMaximize && nextMove.score < bestMove.score) {
+					bestMove.setScore(curr.startRow, curr.startCol, curr.endingRow, curr.endingCol, nextMove.score);
+				}
+		    	// Update alpha and beta. Perform pruning, if possible.
+		    	if (toMinimize) {
+					beta = Math.min(bestMove.score, beta);
+					if (bestMove.score <= alpha || bestMove.score == -MAX_SCORE) {
+						return;
+					}
+				} else {
+					alpha = Math.max(bestMove.score, alpha);
+					if (bestMove.score >= beta || bestMove.score == MAX_SCORE) {
+						return;
 					}
 				}
 			}
