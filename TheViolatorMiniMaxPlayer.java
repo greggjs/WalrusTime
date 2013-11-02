@@ -57,16 +57,6 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 		}
 	}
 
-//	protected static void shuffle(int[] cols) {
-//		int len = cols.length;
-//		for (int i = 0; i < len; i++) {
-//			int val1 = Util.randInt(i, len-1);
-//			int swap = cols[i];
-//			cols[i] = cols[val1];
-//			cols[val1] = swap;
-//		}
-//	}
-
 	/**
 	 * Initializes the stack of Moves.
 	 */
@@ -130,17 +120,17 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	 * @return Black evaluation - White evaluation
 	 */
 	protected static int evalBoard(BreakthroughState state) {
-		int score = eval(state, BreakthroughState.homeSym) - eval(state, BreakthroughState.awaySym);
-//		int score = 0;
-//		for (int r = 0; r < BreakthroughState.N; r++) {
-//			for (int c = 0; c < BreakthroughState.N; c++) {
-//				if (state.board[r][c] == BreakthroughState.homeSym) {
-//					score += (r + 1);
-//				} else if (state.board[r][c] == BreakthroughState.awaySym) {
-//					score -= (BreakthroughState.N - r);
-//				}
-//			}
-//		}	
+		//int score = eval(state, BreakthroughState.homeSym) - eval(state, BreakthroughState.awaySym);
+		int score = 0;
+		for (int r = 0; r < BreakthroughState.N; r++) {
+			for (int c = 0; c < BreakthroughState.N; c++) {
+				if (state.board[r][c] == BreakthroughState.homeSym) {
+					score += (r + 1) * (r + 1);
+				} else if (state.board[r][c] == BreakthroughState.awaySym) {
+					score -= (BreakthroughState.N - r) * (BreakthroughState.N - r);
+				}
+			}
+		}	
 		if (Math.abs(score) > MAX_SCORE) {
 			System.err.println("Problem with eval");
 			System.exit(0);
@@ -203,24 +193,19 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 			ScoredBreakthroughMove bestMove = stack[currDepth];
 			ScoredBreakthroughMove nextMove = stack[currDepth + 1];
 			bestMove.setScore(0, 0, 0, 0, bestScore);
-			GameState.Who currTurn = brd.getWho();
 			
 			ArrayList<ScoredBreakthroughMove> allMv = getPossibleMoves(brd);
 			Collections.shuffle(allMv);
-			char prevPiece = '\0';
+			BreakthroughState preState;
 			for (int i = 0; i < allMv.size(); i++) {
 				curr = allMv.get(i); // moveOK(curr) is always true
-				prevPiece = brd.board[curr.endingRow][curr.endingCol];
-
+				preState = (BreakthroughState)brd.clone();
 				// Make move on board
 				brd.makeMove(curr);
 				// Check out worth of this move
 				minimax(brd, currDepth+1);
 				// Undo the move
-				brd.board[curr.endingRow][curr.endingCol] = prevPiece;
-				brd.numMoves--;
-				brd.status = GameState.Status.GAME_ON;
-		    	brd.who = currTurn;
+				brd = preState;
 		    	
 		    	if (toMaximize && nextMove.score > bestMove.score) {
 					bestMove.setScore(curr.startRow, curr.startCol, curr.endingRow, curr.endingCol, nextMove.score);
@@ -239,7 +224,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	}
 	
 	public static void main(String[] args) {
-		int depth = 6;
+		int depth = 4;
 		GamePlayer p = new TheViolatorMiniMaxPlayer("The Violator is " + depth + " AUTO", depth);
 		p.compete(args);
 	}
