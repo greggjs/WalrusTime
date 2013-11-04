@@ -53,13 +53,23 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 			score = s;
 		}
 		
+		protected void setScore(ScoredBreakthroughMove m){
+			startRow = m.startRow;
+			startCol = m.startCol;
+			endingRow = m.endingRow;
+			endingCol = m.endingCol;
+			score = m.score;
+		}
+		
 		protected void setEndCol(int c2){
 			endingCol = c2;
 		}
 		
-		protected void setScore(int s){
+		protected void setScore(double s){
 			score = s;
 		}
+	    public Object clone()
+	    { return new ScoredBreakthroughMove(startRow, startCol, endingRow, endingCol, score); }
 	}
 	
 	public void init() {
@@ -136,22 +146,37 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 	
 
 
-	protected ArrayList<ScoredBreakthroughMove> generateMoves(BreakthroughState brd){
-		ArrayList<ScoredBreakthroughMove> moves = new ArrayList<ScoredBreakthroughMove>();
+	protected ScoredBreakthroughMove generateStaticMove(BreakthroughState brd){
+		char who = (brd.getWho() == GameState.Who.HOME? BreakthroughState.homeSym : BreakthroughState.awaySym);
 		for(int r = 0; r < N; r++){
 			for(int c = 0; c < N; c++){
-				int endRow = (brd.getWho() == GameState.Who.HOME? r+1 : r-1);
-				ScoredBreakthroughMove tmp = new ScoredBreakthroughMove(r, c, endRow, c-1, 0);
-				if(brd.moveOK(tmp)){
-					moves.add(tmp);
+				if(brd.board[r][c] == who){
+					return new ScoredBreakthroughMove(r,c,r,c,evalBoard(brd));
 				}
-				tmp.setEndCol(c);
-				if(brd.moveOK(tmp)){
-					moves.add(tmp);
-				}
-				tmp.setEndCol(c+1);
-				if(brd.moveOK(tmp)){
-					moves.add(tmp);
+			}
+		}
+		return null;
+	}
+
+	protected ArrayList<ScoredBreakthroughMove> generateMoves(BreakthroughState brd){
+		ArrayList<ScoredBreakthroughMove> moves = new ArrayList<ScoredBreakthroughMove>();
+		char who = (brd.getWho() == GameState.Who.HOME? BreakthroughState.homeSym : BreakthroughState.awaySym);
+		for(int r = 0; r < N; r++){
+			for(int c = 0; c < N; c++){
+				if(brd.board[r][c] == who){
+					int endRow = (brd.getWho() == GameState.Who.HOME? r+1 : r-1);
+					ScoredBreakthroughMove tmp = new ScoredBreakthroughMove(r, c, endRow, c-1, 0);
+					if(brd.moveOK(tmp)){
+						moves.add((ScoredBreakthroughMove) tmp.clone());
+					}
+					tmp.setEndCol(c);
+					if(brd.moveOK(tmp)){
+						moves.add((ScoredBreakthroughMove) tmp.clone());
+					}
+					tmp.setEndCol(c+1);
+					if(brd.moveOK(tmp)){
+						moves.add((ScoredBreakthroughMove) tmp.clone());
+					}
 				}
 			}
 		}
@@ -160,53 +185,75 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 
 
 
-
-
-	private void minimax(BreakthroughState brd, int currDepth) {
+	private ScoredBreakthroughMove minimax(BreakthroughState brd, int currDepth) {
 		boolean toMaximize = (brd.getWho() == GameState.Who.HOME);
 		boolean isTerminal = terminalValue(brd, stack[currDepth]);
 		
 		if (isTerminal) {
-			;
+			return null;
 		} else if (currDepth == depthLimit) {
-			stack[currDepth].setScore(0, 0, 0, 0, evalBoard(brd));
+			return generateStaticMove(brd);
 		} else {
-
-			double bestScore = (brd.getWho() == GameState.Who.HOME ? 
-												Double.NEGATIVE_INFINITY :
-												Double.POSITIVE_INFINITY);
-			ScoredBreakthroughMove bestMove = stack[currDepth];
-			ScoredBreakthroughMove nextMove = stack[currDepth + 1];
-						
-			GameState.Who currTurn = brd.getWho();
-			
 			ArrayList<ScoredBreakthroughMove> moves = generateMoves(brd);
 			long seed = System.nanoTime();
 			Collections.shuffle(moves, new Random(seed));
 			
-			for(ScoredBreakthroughMove m: moves){
-				if(brd.moveOK(m)){
-				int r = m.startRow; int c = m.startCol;
-				char prevPiece = brd.board[r][c];
-				bestMove.setScore(0, 0, 0, 0, bestScore);
-				
-				
-				brd.makeMove(m);
-					
-				minimax(brd, currDepth+1);
-					
-				brd.board[r][c] = prevPiece;
-				brd.numMoves--;
-				brd.status = GameState.Status.GAME_ON;
-				brd.who = currTurn;
-				    	
-				if (toMaximize && nextMove.score > bestMove.score) {
-					bestMove.setScore(r, c, nextMove.startRow, nextMove.startCol, nextMove.score);
-				} else if (!toMaximize && nextMove.score < bestMove.score) {
-					bestMove.setScore(r, c, nextMove.startRow, nextMove.startCol, nextMove.score);
-				}
-				}
+			if(moves.size() == 0){
+				return generateStaticMove(brd);
 			}
+			
+			if(toMaximize){
+				ScoredBreakthroughMove bestMove = generateStaticMove(brd);
+				bestMove.setScore(Double.NEGATIVE_INFINITY);
+				GameState.Who currTurn = brd.getWho();
+				BreakthroughState tmpbrd = (BreakthroughState) brd.clone();
+				for(ScoredBreakthroughMove m: moves){
+					if(brd.moveOK(m)){
+						int r = m.startRow; int c = m.startCol;
+						char prevPiece = tmpbrd.board[r][c];
+					
+						tmpbrd.makeMove(m);
+						
+						minimax(tmpbrd, currDepth+1);
+						
+						tmpbrd.board[r][c] = prevPiece;
+						tmpbrd.numMoves--;
+						tmpbrd.status = GameState.Status.GAME_ON;
+						tmpbrd.who = currTurn;
+					    	
+						if(m.score > bestMove.score)
+							bestMove.setScore(m);
+					}
+				}
+				return bestMove;
+			}
+			
+			else{
+				ScoredBreakthroughMove bestMove = generateStaticMove(brd);
+				bestMove.setScore(Double.POSITIVE_INFINITY);
+				GameState.Who currTurn = brd.getWho();
+				BreakthroughState tmpbrd = (BreakthroughState) brd.clone();
+				for(ScoredBreakthroughMove m: moves){
+					if(brd.moveOK(m)){
+						int r = m.startRow; int c = m.startCol;
+						char prevPiece = tmpbrd.board[r][c];
+					
+						tmpbrd.makeMove(m);
+						
+						minimax(tmpbrd, currDepth+1);
+						
+						tmpbrd.board[r][c] = prevPiece;
+						tmpbrd.numMoves--;
+						tmpbrd.status = GameState.Status.GAME_ON;
+						tmpbrd.who = currTurn;
+					    	
+						if(m.score < bestMove.score)
+							bestMove.setScore(m);
+					}
+				}
+				return bestMove;
+			}
+			
 		}
 	}
 
@@ -214,8 +261,8 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 	@Override
 	public GameMove getMove(GameState state, String lastMv) {
 		// TODO Auto-generated method stub
-		minimax((BreakthroughState)state, 0);
-		return stack[0];
+		return minimax((BreakthroughState)state, 0);
+		//return stack[0];
 	}
 	
 	public static void main(String[] args) {
