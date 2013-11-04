@@ -101,36 +101,45 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	 */
 	private static int eval(BreakthroughState brd, char who)
 	{
-		int score = 0;
+		int score = 0;	
 		for (int r = 0; r < BreakthroughState.N; r++) {
 			for (int c = 0; c < BreakthroughState.N; c++) {
 				if (brd.board[r][c] == BreakthroughState.homeSym) {
-					score += ((r + 1) * (r + 1));
+					if (who == BreakthroughState.homeSym) {
+						score += ((BreakthroughState.N - r) * (BreakthroughState.N - r));//((r + 1) * (r + 1));
+					} else {
+						score -= ((BreakthroughState.N - r) * (BreakthroughState.N - r));//((r + 1) * (r + 1));
+					}
+					
 				} else if (brd.board[r][c] == BreakthroughState.awaySym) {
-					score += ((BreakthroughState.N - r) * (BreakthroughState.N - r));
+					if (who == BreakthroughState.homeSym) {
+						score -= ((r + 1) * (r + 1));//((BreakthroughState.N - r) * (BreakthroughState.N - r));
+					} else {
+						score += ((r + 1) * (r + 1));//((BreakthroughState.N - r) * (BreakthroughState.N - r));
+					}
 				}
 			}
 		}
 		return score;
 	}
-
+	
 	/**
 	 * The evaluation function
 	 * @param state board to be evaluated
 	 * @return Black evaluation - White evaluation
 	 */
 	protected static int evalBoard(BreakthroughState state) {
-		//int score = eval(state, BreakthroughState.homeSym) - eval(state, BreakthroughState.awaySym);
-		int score = 0;
-		for (int r = 0; r < BreakthroughState.N; r++) {
-			for (int c = 0; c < BreakthroughState.N; c++) {
-				if (state.board[r][c] == BreakthroughState.homeSym) {
-					score += (r + 1) * (r + 1);
-				} else if (state.board[r][c] == BreakthroughState.awaySym) {
-					score -= (BreakthroughState.N - r) * (BreakthroughState.N - r);
-				}
-			}
-		}	
+		int score = eval(state, BreakthroughState.homeSym) - eval(state, BreakthroughState.awaySym);
+//		int score = 0;
+//		for (int r = 0; r < BreakthroughState.N; r++) {
+//			for (int c = 0; c < BreakthroughState.N; c++) {
+//				if (state.board[r][c] == BreakthroughState.homeSym) {
+//					score += (r + 1) * (r + 1);
+//				} else if (state.board[r][c] == BreakthroughState.awaySym) {
+//					score -= (BreakthroughState.N - r) * (BreakthroughState.N - r);
+//				}
+//			}
+//		}	
 		if (Math.abs(score) > MAX_SCORE) {
 			System.err.println("Problem with eval");
 			System.exit(0);
@@ -224,7 +233,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	}
 	
 	public static void main(String[] args) {
-		int depth = 5;
+		int depth = 3;
 		GamePlayer p = new TheViolatorMiniMaxPlayer("The Violator is " + depth + " AUTO", depth);
 		p.compete(args);
 	}

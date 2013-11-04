@@ -2,7 +2,6 @@ package theviolator;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import theviolator.TheViolatorMiniMaxPlayer.ScoredBreakthroughMove;
 import breakthrough.*;
 import game.*;
 
@@ -94,7 +93,7 @@ public class TheViolatorAlphaBetaPlayer extends TheViolatorMiniMaxPlayer {
 	
 	public static void main(String [] args)
 	{
-		int depth = 8;
+		int depth = 6;
 		GamePlayer p = new TheViolatorAlphaBetaPlayer("The Violator is " + depth, depth);
 		p.compete(args);
 	}
