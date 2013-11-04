@@ -8,7 +8,6 @@ import game.*;
 
 import java.util.*;
 
-import connect4.MiniMaxConnect4Player.ScoredConnect4Move;
 
 public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 	public static int N = BreakthroughState.N;
@@ -178,7 +177,7 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 												Double.POSITIVE_INFINITY);
 			ScoredBreakthroughMove bestMove = stack[currDepth];
 			ScoredBreakthroughMove nextMove = stack[currDepth + 1];
-			bestMove.setScore(0, 0, 0, 0, bestScore);			
+						
 			GameState.Who currTurn = brd.getWho();
 			
 			ArrayList<ScoredBreakthroughMove> moves = generateMoves(brd);
@@ -186,8 +185,11 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 			Collections.shuffle(moves, new Random(seed));
 			
 			for(ScoredBreakthroughMove m: moves){
+				if(brd.moveOK(m)){
 				int r = m.startRow; int c = m.startCol;
 				char prevPiece = brd.board[r][c];
+				bestMove.setScore(0, 0, 0, 0, bestScore);
+				
 				
 				brd.makeMove(m);
 					
@@ -199,9 +201,10 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 				brd.who = currTurn;
 				    	
 				if (toMaximize && nextMove.score > bestMove.score) {
-					bestMove.setScore(nextMove.startRow, nextMove.startCol, r, c, nextMove.score);
+					bestMove.setScore(r, c, nextMove.startRow, nextMove.startCol, nextMove.score);
 				} else if (!toMaximize && nextMove.score < bestMove.score) {
-					bestMove.setScore(nextMove.startRow, nextMove.startCol, r, c, nextMove.score);
+					bestMove.setScore(r, c, nextMove.startRow, nextMove.startCol, nextMove.score);
+				}
 				}
 			}
 		}
