@@ -53,13 +53,18 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 			score = s;
 		}
 
-		/** Compares this ScoredBreakthroughMove with another ScoredBreakthroughMove m
-		  *	Used in order to call Collections.sort() in getPossibleMoves method (note that it
-		  * will sort ScoredBreakthroughMove objects in decreasing order according to their scores)
-		  * @param m ScoredBreakthroughMove for comparison
-		  * @return +1 if this move has a lower score than other move; -1 if this move has a
-		  * 		higher score than other move; 0 otherwise.
-		  */
+		/**
+		 * Compares this ScoredBreakthroughMove with another
+		 * ScoredBreakthroughMove m Used in order to call Collections.sort() in
+		 * getPossibleMoves method (note that it will sort
+		 * ScoredBreakthroughMove objects in decreasing order according to their
+		 * scores)
+		 * 
+		 * @param m
+		 *            ScoredBreakthroughMove for comparison
+		 * @return +1 if this move has a lower score than other move; -1 if this
+		 *         move has a higher score than other move; 0 otherwise.
+		 */
 		@Override
 		public int compareTo(ScoredBreakthroughMove m) {
 			if (this.score > m.score)
@@ -119,29 +124,36 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	 * @return number of adjacent pairs equal to who
 	 */
 	private static int eval(BreakthroughState brd, char who) {
-		int score = 0;
-
-		for (int r = 0; r < BreakthroughState.N; r++) {
-			for (int c = 0; c < BreakthroughState.N; c++) {
-				if (brd.board[r][c] == BreakthroughState.homeSym) {
-					if (who == BreakthroughState.homeSym) {
-						score += ((BreakthroughState.N - r) * (BreakthroughState.N - r));
-					} else {
-						score -= ((BreakthroughState.N - r) * (BreakthroughState.N - r));
-					}
-
-				} else if (brd.board[r][c] == BreakthroughState.awaySym) {
-					if (who == BreakthroughState.homeSym) {
-						score -= ((r + 1) * (r + 1));
-					} else {
-						score += ((r + 1) * (r + 1));
-					}
-				}
-			}
-		}
-
-		return score;
+        int score = 0;        
+        for (int r = 0; r < BreakthroughState.N; r++) {
+                for (int c = 0; c < BreakthroughState.N; c++) {
+                        if (brd.board[r][c] == BreakthroughState.homeSym) {
+                                if (who == BreakthroughState.homeSym) {
+                                    if(r == BreakthroughState.N-1)
+                                    	return 100000;
+                                	score += ((BreakthroughState.N - r) * (BreakthroughState.N - r));//((r + 1) * (r + 1));
+                                } else {
+                                	if(r == BreakthroughState.N-1)
+                                		return -1000;
+                                    score -= ((BreakthroughState.N - r) * (BreakthroughState.N - r));//((r + 1) * (r + 1));
+                                }
+                                
+                        } else if (brd.board[r][c] == BreakthroughState.awaySym) {
+                                if (who == BreakthroughState.homeSym) {
+                                	if(r == 0)
+                                		return -1000;
+                                    score -= ((r + 1) * (r + 1));//((BreakthroughState.N - r) * (BreakthroughState.N - r));
+                                } else {
+                                	if(r == 0)
+                                		return 10000;
+                                    score += ((r + 1) * (r + 1));//((BreakthroughState.N - r) * (BreakthroughState.N - r));
+                                }
+                        }
+                }
+        }
+        return score;
 	}
+
 
 	/**
 	 * The evaluation function
@@ -174,6 +186,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 		int dir = state.who == GameState.Who.HOME ? +1 : -1;
 		char who = state.who == GameState.Who.HOME ? BreakthroughState.homeSym
 				: BreakthroughState.awaySym;
+		int winRow = (who == BreakthroughState.homeSym? BreakthroughState.N-1: 0);
 		for (int r = 0; r < BreakthroughState.N; r++) {
 			for (int c = 0; c < BreakthroughState.N; c++) {
 				// Only perform ops if current board has this piece as start row
@@ -183,9 +196,16 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 					mv.startCol = c;
 					mv.endingRow = r + dir;
 					mv.endingCol = c;
-					// Give these moves scores so the children can all be compared
-					mv.score = state.who == GameState.Who.HOME ? (mv.endingRow + 1)
+					// Give these moves scores so the children can all be
+					// compared
+					if(mv.endingRow == winRow){
+						mv.score = 100000;
+					}
+					else {
+						mv.score = evalBoard(board);
+						mv.score += state.who == GameState.Who.HOME ? (mv.endingRow + 1)
 							: (BreakthroughState.N - mv.endingRow);
+					}
 					if (board.moveOK(mv)) {
 						list.add(new ScoredBreakthroughMove(mv.startRow,
 								mv.startCol, mv.endingRow, mv.endingCol,
@@ -213,7 +233,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 		Collections.sort(list);
 		return list;
 	}
-
+	
 
 	/**
 	 * Performs the a depth limited minimax algorithm. It leaves it's move
