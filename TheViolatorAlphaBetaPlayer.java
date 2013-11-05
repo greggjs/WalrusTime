@@ -21,7 +21,7 @@ public class TheViolatorAlphaBetaPlayer extends TheViolatorMiniMaxPlayer {
 	 * @param alpha
 	 * @param beta
 	 */
-	private void alphaBeta(BreakthroughState brd, int currDepth,
+	public void alphaBeta(BreakthroughState brd, int currDepth,
 										double alpha, double beta)
 	{
 		boolean toMaximize = (brd.getWho() == GameState.Who.HOME);
