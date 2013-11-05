@@ -30,7 +30,8 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 	}
 	
 	/**
-	 * 
+	 * ScoredBreakthroughMove class to allow for Breakthrough moves with associated
+	 * scores from evaluation function. Used in minimax to determine optimal move
 	 * @author Jake Gregg, Carly Schaeffer, Xi Chen
 	 * 
 	 */
@@ -113,6 +114,7 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 	 */
 	private static int eval(BreakthroughState brd, char who){
 		boolean home = (who == BreakthroughState.homeSym);
+		char away = (who == BreakthroughState.homeSym? BreakthroughState.awaySym : BreakthroughState.homeSym);
 		int eval = 0;
 		for(int r = 0; r < N; r++){
 			for(int c = 0; c < N; c++){
@@ -124,6 +126,14 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 						eval += (N-r)*(N-r);
 					}
 				}
+			/*	else if((brd.board[r][c] == away)){
+					if(home){
+						eval -= (N-r)*(N-r);
+					}
+					else{
+						eval -= r*r;
+					}
+				}*/
 			}
 		}
 		return eval;
@@ -137,6 +147,9 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 	public static int evalBoard(BreakthroughState brd)
 	{ 
 		int score = eval(brd, BreakthroughState.homeSym) - eval(brd, BreakthroughState.awaySym);
+		if (brd.getWho() != GameState.Who.HOME){
+			score *= -1;
+		}
 		if (Math.abs(score) > MAX_SCORE) {
 			System.err.println("Problem with eval");
 			System.exit(0);
@@ -145,7 +158,13 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 	}
 	
 
-
+	/**
+	 * Determines a valid move in which the current player does not make a move, but keeps
+	 * piece in same space. Adds an evaluation of the current board. Useful in minimax when reach
+	 * depth limit, have no successor boards, or have reached a terminal state.
+	 * @param brd the current board state
+	 * @return ScoredBreakthroughMove that is a valid stayput move with the associated evaluation
+	 */
 	protected ScoredBreakthroughMove generateStaticMove(BreakthroughState brd){
 		char who = (brd.getWho() == GameState.Who.HOME? BreakthroughState.homeSym : BreakthroughState.awaySym);
 		for(int r = 0; r < N; r++){
@@ -158,23 +177,33 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 		return null;
 	}
 
+	/**
+	 * Determines all of the possible moves the player can make given the current board setup
+	 * @param brd
+	 * @return ArrayList of possible ScoredBreakthroughMove objects
+	 */
 	protected ArrayList<ScoredBreakthroughMove> generateMoves(BreakthroughState brd){
 		ArrayList<ScoredBreakthroughMove> moves = new ArrayList<ScoredBreakthroughMove>();
 		char who = (brd.getWho() == GameState.Who.HOME? BreakthroughState.homeSym : BreakthroughState.awaySym);
+		char other = (brd.getWho() == GameState.Who.HOME? BreakthroughState.awaySym : BreakthroughState.homeSym);
 		for(int r = 0; r < N; r++){
 			for(int c = 0; c < N; c++){
 				if(brd.board[r][c] == who){
+					int eval = evalBoard(brd) + 1;
 					int endRow = (brd.getWho() == GameState.Who.HOME? r+1 : r-1);
-					ScoredBreakthroughMove tmp = new ScoredBreakthroughMove(r, c, endRow, c-1, 0);
+					ScoredBreakthroughMove tmp = new ScoredBreakthroughMove(r, c, endRow, c-1, eval);
 					if(brd.moveOK(tmp)){
+						
 						moves.add((ScoredBreakthroughMove) tmp.clone());
 					}
 					tmp.setEndCol(c);
 					if(brd.moveOK(tmp)){
+						
 						moves.add((ScoredBreakthroughMove) tmp.clone());
 					}
 					tmp.setEndCol(c+1);
 					if(brd.moveOK(tmp)){
+						
 						moves.add((ScoredBreakthroughMove) tmp.clone());
 					}
 				}
@@ -184,26 +213,61 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 	}
 
 
+	/**
+	 * Determines whether the current board state has no possible moves for this player
+	 * @param brd the current board state
+	 * @return true if there are no possible moves; false otherwise
+	 */
+	protected boolean isLeaf(BreakthroughState brd){
+		char who = (brd.getWho() == GameState.Who.HOME? BreakthroughState.homeSym : BreakthroughState.awaySym);
+		int count = 0;
+		for(int r = 0; r < N; r++){
+			for(int c = 0; c < N; c++){
+				if(brd.board[r][c] == who){
+					int endRow = (brd.getWho() == GameState.Who.HOME? r+1 : r-1);
+					ScoredBreakthroughMove tmp = new ScoredBreakthroughMove(r, c, endRow, c-1, 0);
+					if(brd.moveOK(tmp)){
+						count++;
+					}
+					tmp.setEndCol(c);
+					if(brd.moveOK(tmp)){
+						count++;
+					}
+					tmp.setEndCol(c+1);
+					if(brd.moveOK(tmp)){
+						count++;
+					}
+				}
+			}
+		}
+		return count == 0;
+	}
 
+	/**
+	 * Performs minimax to determine the optimal move for current player
+	 * @param brd the current board state
+	 * @param currDepth how many times minimax has been called
+	 * @return ScoredBreakthroughMove that is the optimal move for this player
+	 */
 	private ScoredBreakthroughMove minimax(BreakthroughState brd, int currDepth) {
 		boolean toMaximize = (brd.getWho() == GameState.Who.HOME);
-		boolean isTerminal = terminalValue(brd, stack[currDepth]);
 		
-		if (isTerminal) {
-			return null;
-		} else if (currDepth == depthLimit) {
-			return generateStaticMove(brd);
+		
+		ScoredBreakthroughMove noMove = generateStaticMove(brd);
+		boolean isTerminal = terminalValue(brd, stack[currDepth]);
+		if (currDepth == depthLimit || isLeaf(brd) || isTerminal) {
+			return noMove;
 		} else {
 			ArrayList<ScoredBreakthroughMove> moves = generateMoves(brd);
 			long seed = System.nanoTime();
 			Collections.shuffle(moves, new Random(seed));
 			
-			if(moves.size() == 0){
-				return generateStaticMove(brd);
+			/*if(moves.size() == 0){
+				return noMove;
 			}
 			
-			if(toMaximize){
-				ScoredBreakthroughMove bestMove = generateStaticMove(brd);
+			else*/ if(toMaximize){
+				ScoredBreakthroughMove bestMove = noMove;
 				bestMove.setScore(Double.NEGATIVE_INFINITY);
 				GameState.Who currTurn = brd.getWho();
 				BreakthroughState tmpbrd = (BreakthroughState) brd.clone();
@@ -258,7 +322,10 @@ public class TheViolatorMiniMaxPlayer extends game.GamePlayer {
 	}
 
 	
-	@Override
+	
+	/**
+	 * Determines what move should be made
+	 */
 	public GameMove getMove(GameState state, String lastMv) {
 		// TODO Auto-generated method stub
 		return minimax((BreakthroughState)state, 0);
