@@ -10,8 +10,8 @@ import game.*;
 public class TheViolatorDominatrix extends TheViolatorMiniMaxPlayer{
 	private static int NUM_THREADS = 4;
 	private static String nickname = "The Violator Dominatrix";
-	private static int depthLimit = 6;
-	protected static ScoredBreakthroughMove[] sharedStack;
+	//private static int depthLimit = 6;
+	protected static ScoredBreakthroughMove[] sharedStack = new ScoredBreakthroughMove[NUM_THREADS];
 	public TheViolatorDominatrix (String nickname, int depthLimit) {
 		super(nickname, depthLimit);
 	}
@@ -29,7 +29,7 @@ public class TheViolatorDominatrix extends TheViolatorMiniMaxPlayer{
 		}
 		
 		public void run() {
-			alphaBeta((BreakthroughState)brd, 0, Double.NEGATIVE_INFINITY, 
+			this.alphaBeta((BreakthroughState)brd, 0, Double.NEGATIVE_INFINITY, 
 					 Double.POSITIVE_INFINITY);
 			sharedStack[id] = stack[0];
 			System.out.println(stack[0].score);
@@ -40,8 +40,9 @@ public class TheViolatorDominatrix extends TheViolatorMiniMaxPlayer{
 	public GameMove getMove(GameState brd, String lastMove)
 	{ 
 		ArrayList<Thread> tList = new ArrayList<Thread>();
-		for (int i = 0; i < NUM_THREADS; i++) {
-			Dominatrix dom = new Dominatrix(nickname, depthLimit, (BreakthroughState)brd);
+		// start an iterative deepening search... from 3 to limit (6)
+		for (int i = 5; i < NUM_THREADS; i++) {
+			Dominatrix dom = new Dominatrix(nickname, i, (BreakthroughState)brd);
 			Thread t = new Thread(dom);
 			t.start();
 			tList.add(t);
@@ -55,9 +56,13 @@ public class TheViolatorDominatrix extends TheViolatorMiniMaxPlayer{
 		//System.out.println(stack[0].score);
 		ArrayList<ScoredBreakthroughMove> list = new ArrayList<ScoredBreakthroughMove>(Arrays.asList(sharedStack));
 		ScoredBreakthroughMove best = Collections.min(list);
-		return best;
+		System.out.println(best.score);
+		return sharedStack[0];
 	}
-	
+	public void init() {
+		for (int i = 0; i < NUM_THREADS; i++)
+			sharedStack[i] = new ScoredBreakthroughMove(0, 0, 0, 0, 0);
+	}
 	public static char [] toChars(String x)
 	{
 		char [] res = new char [x.length()];
@@ -69,7 +74,8 @@ public class TheViolatorDominatrix extends TheViolatorMiniMaxPlayer{
 	public static void main(String [] args)
 	{
 		//int depth = 6;
-		GamePlayer p = new TheViolatorDominatrix(nickname, depthLimit);
+	
+		GamePlayer p = new TheViolatorDominatrix(nickname, 6);
 		p.compete(args);
 	}
 }

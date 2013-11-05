@@ -32,22 +32,22 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	 */
 	
 	// A BreakthroughMove with a scored (how well it evaluates)
-	protected class ScoredBreakthroughMove extends
+	public class ScoredBreakthroughMove extends
 			breakthrough.BreakthroughMove implements Comparable {
 		public double score;
 		
-		protected ScoredBreakthroughMove() {
+		public ScoredBreakthroughMove() {
 			super(0, 0, 0, 0);
 			score = 0;
 		}
 
-		protected ScoredBreakthroughMove(int r1, int c1, int r2,
+		public ScoredBreakthroughMove(int r1, int c1, int r2,
 				int c2, double s) {
 			super(r1, c1, r2, c2);
 			score = s;
 		}
 
-		protected void setScore(int r1, int c1, int r2, int c2,
+		public void setScore(int r1, int c1, int r2, int c2,
 				double s) {
 			startRow = r1;
 			startCol = c1;
