@@ -10,7 +10,7 @@ import game.*;
 public class TheViolatorDominatrix extends TheViolatorMiniMaxPlayer{
 	private static int NUM_THREADS = 4;
 	private static String nickname = "The Violator Dominatrix";
-	//private static int depthLimit = 6;
+	private int numMoves;
 	protected static ScoredBreakthroughMove[] sharedStack = new ScoredBreakthroughMove[NUM_THREADS];
 	public TheViolatorDominatrix (String nickname, int depthLimit) {
 		super(nickname, depthLimit);
@@ -39,6 +39,12 @@ public class TheViolatorDominatrix extends TheViolatorMiniMaxPlayer{
 	
 	public GameMove getMove(GameState brd, String lastMove)
 	{ 
+		Opening open = new Opening((BreakthroughState)brd, numMoves);
+		if (open.isBeginning()) {
+			BreakthroughMove openMove = open.openingMove();
+			numMoves++;
+			return openMove;
+		}
 		ArrayList<Thread> tList = new ArrayList<Thread>();
 		// start an iterative deepening search... from 3 to limit (6)
 		for (int i = 5; i < NUM_THREADS; i++) {
@@ -52,17 +58,19 @@ public class TheViolatorDominatrix extends TheViolatorMiniMaxPlayer{
 				t.join();
 			} catch (InterruptedException err) {}
 		}
-		
+		numMoves++;
 		//System.out.println(stack[0].score);
 		ArrayList<ScoredBreakthroughMove> list = new ArrayList<ScoredBreakthroughMove>(Arrays.asList(sharedStack));
 		ScoredBreakthroughMove best = Collections.min(list);
 		System.out.println(best.score);
 		return sharedStack[0];
 	}
+	
 	public void init() {
 		for (int i = 0; i < NUM_THREADS; i++)
 			sharedStack[i] = new ScoredBreakthroughMove(0, 0, 0, 0, 0);
 	}
+	
 	public static char [] toChars(String x)
 	{
 		char [] res = new char [x.length()];
