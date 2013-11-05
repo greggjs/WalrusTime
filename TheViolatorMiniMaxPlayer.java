@@ -33,7 +33,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	
 	// A BreakthroughMove with a scored (how well it evaluates)
 	protected class ScoredBreakthroughMove extends
-			breakthrough.BreakthroughMove {
+			breakthrough.BreakthroughMove implements Comparable {
 		public double score;
 		
 		protected ScoredBreakthroughMove() {
@@ -54,6 +54,19 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 			endingRow = r2;
 			endingCol = c2;
 			score = s;
+		}
+
+		@Override
+		public int compareTo(Object o) {
+			if (o instanceof ScoredBreakthroughMove) {
+				if (((ScoredBreakthroughMove) o).score > this.score)
+					return 1;
+				else if (((ScoredBreakthroughMove) o).score < this.score)
+					return -1;
+				else 
+					return 0;
+			}
+			return 0;
 		}
 	}
 
