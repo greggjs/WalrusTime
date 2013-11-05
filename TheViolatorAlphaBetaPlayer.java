@@ -1,90 +1,104 @@
 package breakthrough.WalrusTime;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Random;
 
 import breakthrough.*;
 import game.*;
+
+//TheViolatorAlphaBetaPlayer is identical to TheViolatorMiniMaxPlayer
+//except for the search process, which uses alpha beta pruning.
 
 public class TheViolatorAlphaBetaPlayer extends TheViolatorMiniMaxPlayer {
 
 	public TheViolatorAlphaBetaPlayer(String nickname, int depthLimit) {
 		super(nickname, depthLimit);
-		// TODO Auto-generated constructor stub
 	}
-	
-	
+
 	/**
 	 * Performs alpha beta pruning.
+	 * 
 	 * @param brd
 	 * @param currDepth
 	 * @param alpha
 	 * @param beta
 	 */
-	private ScoredBreakthroughMove alphaBeta(BreakthroughState brd, int currDepth,
-										double alpha, double beta){
+	private void alphaBeta(BreakthroughState brd, int currDepth, double alpha,
+			double beta) {
+		boolean toMaximize = (brd.getWho() == GameState.Who.HOME);
 		boolean isTerminal = terminalValue(brd, stack[currDepth]);
-		
-		ScoredBreakthroughMove noMove = generateStaticMove(brd);
-		
-		if (currDepth == depthLimit || isLeaf(brd) || isTerminal) {
-			return noMove;
+		boolean toMinimize = !toMaximize;
+
+		if (isTerminal) {
+			;
+		} else if (currDepth == depthLimit) {
+			stack[currDepth].setScore(0, 0, 0, 0, evalBoard(brd));
 		} else {
-			ArrayList<ScoredBreakthroughMove> moves = generateMoves(brd);
-			//long seed = System.nanoTime();
-			//Collections.shuffle(moves, new Random(seed));
-			
-				Collections.sort(moves, new maxMoveOrdering());
-				ScoredBreakthroughMove bestMove = (ScoredBreakthroughMove)noMove.clone();
-				bestMove.setScore(alpha);
-				GameState.Who currTurn = brd.getWho();
-				BreakthroughState tmpbrd = (BreakthroughState) brd.clone();
-				for(ScoredBreakthroughMove m: moves){
-					if(brd.moveOK(m)){
-						int r = m.startRow; int c = m.startCol;
-						char prevPiece = tmpbrd.board[r][c];
-					
-						tmpbrd.makeMove(m);
-						
-						alphaBeta(tmpbrd, currDepth+1, bestMove.score, beta);
-						
-						tmpbrd.board[r][c] = prevPiece;
-						tmpbrd.numMoves--;
-						tmpbrd.status = GameState.Status.GAME_ON;
-						tmpbrd.who = currTurn;
-					    	
-						if(m.score > bestMove.score){
-							bestMove.setScore(m);
-							alpha = bestMove.score;
-						}
-						if(bestMove.score >= beta)
-							return bestMove;
+			ScoredBreakthroughMove curr = new ScoredBreakthroughMove(0, 0, 0,
+					0, 0);
+			double bestScore = (toMaximize ? Double.NEGATIVE_INFINITY
+					: Double.POSITIVE_INFINITY);
+			ScoredBreakthroughMove bestMove = stack[currDepth];
+			ScoredBreakthroughMove nextMove = stack[currDepth + 1];
+			bestMove.setScore(0, 0, 0, 0, bestScore);
+
+			ArrayList<ScoredBreakthroughMove> allMv = getPossibleMoves(brd);
+
+			// Collections.shuffle(allMv);
+			BreakthroughState preState;
+			for (int i = 0; i < allMv.size(); i++) {
+				curr = allMv.get(i); // moveOK(curr) is always true
+				preState = (BreakthroughState) brd.clone();
+				// Make move on board
+				brd.makeMove(curr);
+				// Check out worth of this move
+				alphaBeta(brd, currDepth + 1, alpha, beta);
+				// Undo the move
+				brd = preState;
+
+				if (toMaximize && nextMove.score > bestMove.score) {
+					bestMove.setScore(curr.startRow, curr.startCol,
+							curr.endingRow, curr.endingCol, nextMove.score);
+				} else if (!toMaximize && nextMove.score < bestMove.score) {
+					bestMove.setScore(curr.startRow, curr.startCol,
+							curr.endingRow, curr.endingCol, nextMove.score);
+				}
+				// Update alpha and beta. Perform pruning, if possible.
+				if (toMinimize) {
+					beta = Math.min(bestMove.score, beta);
+					if (bestMove.score <= alpha || bestMove.score == -MAX_SCORE) {
+						return;
+					}
+				} else {
+					alpha = Math.max(bestMove.score, alpha);
+					if (bestMove.score >= beta || bestMove.score == MAX_SCORE) {
+						return;
 					}
 				}
-				return bestMove;
+			}
 		}
 	}
-	
-	
-	public static class maxMoveOrdering implements Comparator<ScoredBreakthroughMove>{
-		public int compare(ScoredBreakthroughMove m1, ScoredBreakthroughMove m2) {
-			return (int)(m2.score - m1.score);
-		}
-		
+
+	public GameMove getMove(GameState brd, String lastMove) {
+		alphaBeta((BreakthroughState) brd, 0, Double.NEGATIVE_INFINITY,
+				Double.POSITIVE_INFINITY);
+		System.out.println(stack[0].score);
+		return stack[0];
 	}
-	
-	public GameMove getMove(GameState brd, String lastMove)
-	{ 
-		return alphaBeta((BreakthroughState)brd, 0, Double.NEGATIVE_INFINITY, 
-										 Double.POSITIVE_INFINITY);
+
+	public static char[] toChars(String x) {
+		char[] res = new char[x.length()];
+		for (int i = 0; i < x.length(); i++)
+			res[i] = x.charAt(i);
+		return res;
 	}
-	
-	public static void main(String [] args)
-	{
-		int depth = 5;
-		GamePlayer p = new TheViolatorAlphaBetaPlayer("AlphaBeta " + depth, depth);
+
+	public static void main(String[] args) {
+		int depth = 6;
+		GamePlayer p = new TheViolatorAlphaBetaPlayer("The Violator is "
+				+ depth, depth);
 		p.compete(args);
 	}
-	
+
 }
