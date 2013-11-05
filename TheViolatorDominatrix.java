@@ -3,7 +3,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
-import theviolator.TheViolatorMiniMaxPlayer.ScoredBreakthroughMove;
+//import theviolator.TheViolatorMiniMaxPlayer.ScoredBreakthroughMove;
 
 import breakthrough.*;
 import game.*;
@@ -46,8 +46,8 @@ public class TheViolatorDominatrix extends TheViolatorMiniMaxPlayer{
 			return openMove;
 		}
 		ArrayList<Thread> tList = new ArrayList<Thread>();
-		// start an iterative deepening search... from 3 to limit (6)
-		for (int i = 5; i < NUM_THREADS; i++) {
+		// start an iterative deepening search... 3-depthLimit to depthLimit
+		for (int i = depthLimit-3; i <= NUM_THREADS; i++) {
 			Dominatrix dom = new Dominatrix(nickname, i, (BreakthroughState)brd);
 			Thread t = new Thread(dom);
 			t.start();
@@ -61,12 +61,13 @@ public class TheViolatorDominatrix extends TheViolatorMiniMaxPlayer{
 		numMoves++;
 		//System.out.println(stack[0].score);
 		ArrayList<ScoredBreakthroughMove> list = new ArrayList<ScoredBreakthroughMove>(Arrays.asList(sharedStack));
-		ScoredBreakthroughMove best = Collections.min(list);
+		ScoredBreakthroughMove best = Collections.max(list);
 		System.out.println(best.score);
 		return sharedStack[0];
 	}
 	
 	public void init() {
+		depthLimit = 8;
 		for (int i = 0; i < NUM_THREADS; i++)
 			sharedStack[i] = new ScoredBreakthroughMove(0, 0, 0, 0, 0);
 	}
