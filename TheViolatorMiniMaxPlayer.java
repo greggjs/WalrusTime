@@ -139,14 +139,14 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
                                 }
                                 
                         } else if (brd.board[r][c] == BreakthroughState.awaySym) {
-                                if (who == BreakthroughState.homeSym) {
-                                	if(r == 0)
-                                		return -1000;
-                                    score -= ((r + 1) * (r + 1));//((BreakthroughState.N - r) * (BreakthroughState.N - r));
-                                } else {
+                                if (who == BreakthroughState.awaySym) {
                                 	if(r == 0)
                                 		return 10000;
                                     score += ((r + 1) * (r + 1));//((BreakthroughState.N - r) * (BreakthroughState.N - r));
+                                } else {
+                                	if(r == 0)
+                                		return -1000;
+                                    score -= ((r + 1) * (r + 1));//((BreakthroughState.N - r) * (BreakthroughState.N - r));
                                 }
                         }
                 }
