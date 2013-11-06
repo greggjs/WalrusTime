@@ -74,7 +74,7 @@ public class TheViolatorAlphaBetaPlayer extends TheViolatorMiniMaxPlayer {
 			}
 		}
 	}
-		
+		 
 	public GameMove getMove(GameState brd, String lastMove)
 	{ 
 		alphaBeta((BreakthroughState)brd, 0, Double.NEGATIVE_INFINITY, 
