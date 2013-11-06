@@ -124,37 +124,77 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	 * @return number of adjacent pairs equal to who
 	 */
 	private static int eval(BreakthroughState brd, char who) {
-        int score = 0;        
-        for (int r = 0; r < BreakthroughState.N; r++) {
-                for (int c = 0; c < BreakthroughState.N; c++) {
-                        if (brd.board[r][c] == BreakthroughState.homeSym) {
-                                if (who == BreakthroughState.homeSym) {
-                                    if(r == BreakthroughState.N-1)
-                                    	return 100000;
-                                	score += ((BreakthroughState.N - r) * (BreakthroughState.N - r));//((r + 1) * (r + 1));
-                                } else {
-                                	if(r == BreakthroughState.N-1)
-                                		return -1000;
-                                    score -= ((BreakthroughState.N - r) * (BreakthroughState.N - r));//((r + 1) * (r + 1));
-                                }
-                                
-                        } else if (brd.board[r][c] == BreakthroughState.awaySym) {
-                                if (who == BreakthroughState.awaySym) {
-                                	if(r == 0)
-                                		return 10000;
-                                    score += ((r + 1) * (r + 1));//((BreakthroughState.N - r) * (BreakthroughState.N - r));
-                                } else {
-                                	if(r == 0)
-                                		return -1000;
-                                    score -= ((r + 1) * (r + 1));//((BreakthroughState.N - r) * (BreakthroughState.N - r));
-                                }
-                        }
-                }
-        }
-        return score;
+		int score = 0;
+		char opp = (who == BreakthroughState.homeSym? BreakthroughState.awaySym : BreakthroughState.homeSym);
+		int dir = brd.who == GameState.Who.HOME ? +1 : -1;
+		for (int r = 0; r < BreakthroughState.N; r++) {
+			for (int c = 0; c < BreakthroughState.N; c++) {
+				if (brd.board[r][c] == BreakthroughState.homeSym) {
+					if (who == BreakthroughState.homeSym) {
+						if (r == BreakthroughState.N - 1)
+							score += 100000;
+						else if (r==BreakthroughState.N-2)
+							score += 5;
+						score += (c+1 < BreakthroughState.N && brd.board[r][c] == brd.board[r][c+1]? r + 1: 0);
+						//score -= (c + 1 < BreakthroughState.N && r + dir < BreakthroughState.N && r + dir >= 0 && brd.board[r+dir][c+1] == opp? BreakthroughState.N-1 : 0);
+						//score -= (c - 1 >= 0 && r + dir < BreakthroughState.N && r + dir >= 0 && brd.board[r+dir][c-1] == opp? BreakthroughState.N-1 : 0);
+						score += ((BreakthroughState.N - r) * (BreakthroughState.N - r));
+					} else {
+						if (r == BreakthroughState.N - 1)
+							score -= 1000;
+						else if (r== BreakthroughState.N-2)
+							score -= 5;
+						score -= (c+1 < BreakthroughState.N && brd.board[r][c] == brd.board[r][c+1]? r + 1 : 0);
+						score -= ((BreakthroughState.N - r) * (BreakthroughState.N - r));
+					}
+					// gives more points when sticking together. takes points away if opponent is sticking together
+					//if(r > 1 && r < BreakthroughState.N-2){
+						//score += (c+1 < BreakthroughState.N && brd.board[r][c] == who && brd.board[r][c] == brd.board[r][c+1]? r + 1: 0);
+ 
+//						score -= (c+1 < BreakthroughState.N && brd.board[r][c] == opp && brd.board[r][c] == brd.board[r][c+1]? r + 1 : 0);
+					//}
+
+				} else if (brd.board[r][c] == BreakthroughState.awaySym) {
+					if (who == BreakthroughState.homeSym) {
+						if (r == 0)
+							score -= 1000;
+						else if(r == 1)
+							score -= 10;
+						score -= (c+1 < BreakthroughState.N && brd.board[r][c] == brd.board[r][c+1]? BreakthroughState.N-r : 0);
+						score -= ((r + 1) * (r + 1));
+						
+					} else {
+						if (r == 0)
+							score += 10000;
+						else if(r==1)
+							score += 10;
+						score += (c+1 < BreakthroughState.N && brd.board[r][c] == brd.board[r][c+1]? BreakthroughState.N-r : 0);
+						//score -= (c + 1 < BreakthroughState.N && r + dir < BreakthroughState.N && r + dir >= 0 && brd.board[r+dir][c+1] == opp? BreakthroughState.N-1 : 0);
+						//score -= (c - 1 >= 0 && r + dir < BreakthroughState.N && r + dir >= 0 && brd.board[r+dir][c-1] == opp? BreakthroughState.N-1 : 0);
+						score += ((r + 1) * (r + 1));
+					}
+					// gives more points when sticking together. takes points away if opponent is sticking together
+					//if(r > 1 && r < BreakthroughState.N-2){
+						//score += (c+1 < BreakthroughState.N && brd.board[r][c] == who && brd.board[r][c] == brd.board[r][c+1]? BreakthroughState.N-r : 0);
+						//score -= (c+1 < BreakthroughState.N && brd.board[r][c] == opp && brd.board[r][c] == brd.board[r][c+1]? BreakthroughState.N-r : 0);
+						
+					//}
+				}
+				// gives more points when sticking together. takes points away if opponent is sticking together
+				/*if(r > 1 && r < BreakthroughState.N-2){
+					score += (c+1 < BreakthroughState.N && brd.board[r][c] == who && brd.board[r][c] == brd.board[r][c+1]? 1 : 0);
+
+					score -= (c+1 < BreakthroughState.N && brd.board[r][c] == opp && brd.board[r][c] == brd.board[r][c+1]? 1 : 0);
+				}*/
+				
+			}		
+			
+		}
+
+
+		return score;
 	}
-
-
+	
 	/**
 	 * The evaluation function
 	 * 
@@ -186,7 +226,8 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 		int dir = state.who == GameState.Who.HOME ? +1 : -1;
 		char who = state.who == GameState.Who.HOME ? BreakthroughState.homeSym
 				: BreakthroughState.awaySym;
-		int winRow = (who == BreakthroughState.homeSym? BreakthroughState.N-1: 0);
+		int winRow = (who == BreakthroughState.homeSym ? BreakthroughState.N - 1
+				: 0);
 		for (int r = 0; r < BreakthroughState.N; r++) {
 			for (int c = 0; c < BreakthroughState.N; c++) {
 				// Only perform ops if current board has this piece as start row
@@ -198,15 +239,15 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 					mv.endingCol = c;
 					// Give these moves scores so the children can all be
 					// compared
-					if(mv.endingRow == winRow){
-						mv.score = 100000;
-					}
-					else {
-						mv.score = evalBoard(board);
-						mv.score += state.who == GameState.Who.HOME ? (mv.endingRow + 1)
-							: (BreakthroughState.N - mv.endingRow);
-					}
+					
 					if (board.moveOK(mv)) {
+						if (mv.endingRow == winRow) {
+							mv.score = 100000;
+						} else {
+							mv.score = evalBoard(board);
+							mv.score += state.who == GameState.Who.HOME ? (mv.endingRow + 1)
+									: (BreakthroughState.N - mv.endingRow);
+						}
 						list.add(new ScoredBreakthroughMove(mv.startRow,
 								mv.startCol, mv.endingRow, mv.endingCol,
 								mv.score));
@@ -214,6 +255,13 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 					mv.endingRow = r + dir;
 					mv.endingCol = c + 1;
 					if (board.moveOK(mv)) {
+						if (mv.endingRow == winRow) {
+							mv.score = 100000;
+						} else {
+							mv.score = evalBoard(board);
+							mv.score += state.who == GameState.Who.HOME ? (mv.endingRow + 1)
+									: (BreakthroughState.N - mv.endingRow);
+						}
 						list.add(new ScoredBreakthroughMove(mv.startRow,
 								mv.startCol, mv.endingRow, mv.endingCol,
 								mv.score));
@@ -221,6 +269,13 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 					mv.endingRow = r + dir;
 					mv.endingCol = c - 1;
 					if (board.moveOK(mv)) {
+						if (mv.endingRow == winRow) {
+							mv.score = 100000;
+						} else {
+							//mv.score = evalBoard(board);
+							mv.score += state.who == GameState.Who.HOME ? (mv.endingRow + 1)
+									: (BreakthroughState.N - mv.endingRow);
+						}
 						list.add(new ScoredBreakthroughMove(mv.startRow,
 								mv.startCol, mv.endingRow, mv.endingCol,
 								mv.score));
@@ -233,7 +288,6 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 		Collections.sort(list);
 		return list;
 	}
-	
 
 	/**
 	 * Performs the a depth limited minimax algorithm. It leaves it's move
