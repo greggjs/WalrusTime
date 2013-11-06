@@ -13,7 +13,7 @@ public class TheViolatorDominatrix extends TheViolatorAlphaBetaPlayer{
 	private static int NUM_THREADS = 4;
 	private static int tId = 0;
 	private static String nickname = "The Violator Dominatrix";
-	private static int numMoves;
+	private int numMoves;
 	protected static ScoredBreakthroughMove[] sharedStack = new ScoredBreakthroughMove[30];
 	public TheViolatorDominatrix (String nickname, int depthLimit) {
 		super(nickname, depthLimit);
@@ -54,14 +54,18 @@ public class TheViolatorDominatrix extends TheViolatorAlphaBetaPlayer{
 			numMoves++;
 			return openMove;
 		}
-		ArrayList<ScoredBreakthroughMove> allMv = getPossibleMoves(brd);
+		this.alphaBeta((BreakthroughState)brd, 0, Double.NEGATIVE_INFINITY, 
+				 Double.POSITIVE_INFINITY);
+		System.out.println(stack[0].score);
+		return stack[0];
+		/*ArrayList<ScoredBreakthroughMove> allMv = getPossibleMoves(brd);
 		Collections.shuffle(allMv);
 		BreakthroughState preState;
 		ScoredBreakthroughMove curr = new ScoredBreakthroughMove(
 				0, 0, 0, 0, 0);
 		ArrayList<Thread> tList = new ArrayList<Thread>();
 		
-		for (int i = 0; i < 4/*allMv.size()*/; i++) {
+		for (int i = 0; i < 4/*allMv.size()*//*; i++) {
 			curr = allMv.get(i); // moveOK(curr) is always true
 			preState = (BreakthroughState)brd.clone();
 			// Make move on board
@@ -79,8 +83,9 @@ public class TheViolatorDominatrix extends TheViolatorAlphaBetaPlayer{
 			} catch (InterruptedException err) {}
 		}
 		//numMoves++;
+		
 		ArrayList<Double> dList = new ArrayList<Double>();
-		for (int i = 0; i < 4/*allMv.size()*/; i++)
+		for (int i = 0; i < 4/*allMv.size()*//*; i++)
 			dList.add(sharedStack[i].score);
 		Double best;
 		if (brd.getWho()==GameState.Who.HOME)
@@ -88,15 +93,15 @@ public class TheViolatorDominatrix extends TheViolatorAlphaBetaPlayer{
 		else
 			best = Collections.min(dList);
 		int bestMoveIndex = dList.indexOf(best);
-		System.out.println(best);
+		System.out.println(best)*/
 		//init();
-		return allMv.get(bestMoveIndex);
+		//return allMv.get(bestMoveIndex);
 
 	}
 	
 	public void init() {
 		numMoves = 0;
-		depthLimit = 6;
+		depthLimit = 7;
 		stack = new ScoredBreakthroughMove[MAX_DEPTH];
 		for (int i = 0; i < MAX_DEPTH; i++)
 			stack[i] = new ScoredBreakthroughMove(0, 0, 0, 0, 0);
@@ -115,7 +120,6 @@ public class TheViolatorDominatrix extends TheViolatorAlphaBetaPlayer{
 	public static void main(String [] args)
 	{
 		//int depth = 6;
-		numMoves = 0;
 		GamePlayer p = new TheViolatorDominatrix(nickname, 6);
 		p.compete(args);
 	}
