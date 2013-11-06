@@ -125,76 +125,66 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	 */
 	private static int eval(BreakthroughState brd, char who) {
 		int score = 0;
-		char opp = (who == BreakthroughState.homeSym? BreakthroughState.awaySym : BreakthroughState.homeSym);
-		int dir = brd.who == GameState.Who.HOME ? +1 : -1;
 		for (int r = 0; r < BreakthroughState.N; r++) {
 			for (int c = 0; c < BreakthroughState.N; c++) {
+				// If the board piece is a home piece
 				if (brd.board[r][c] == BreakthroughState.homeSym) {
+					  
 					if (who == BreakthroughState.homeSym) {
+						
 						if (r == BreakthroughState.N - 1)
 							score += 100000;
-						else if (r==BreakthroughState.N-2)
+						else if (r == BreakthroughState.N - 2)
 							score += 5;
-						score += (c+1 < BreakthroughState.N && brd.board[r][c] == brd.board[r][c+1]? r + 1: 0);
-						//score -= (c + 1 < BreakthroughState.N && r + dir < BreakthroughState.N && r + dir >= 0 && brd.board[r+dir][c+1] == opp? BreakthroughState.N-1 : 0);
-						//score -= (c - 1 >= 0 && r + dir < BreakthroughState.N && r + dir >= 0 && brd.board[r+dir][c-1] == opp? BreakthroughState.N-1 : 0);
+						score += (c + 1 < BreakthroughState.N
+								&& brd.board[r][c] == brd.board[r][c + 1] ? r + 1
+								: 0);
 						score += ((BreakthroughState.N - r) * (BreakthroughState.N - r));
-					} else {
+					} 
+					
+					else {
 						if (r == BreakthroughState.N - 1)
 							score -= 1000;
-						else if (r== BreakthroughState.N-2)
+						else if (r == BreakthroughState.N - 2)
 							score -= 5;
-						score -= (c+1 < BreakthroughState.N && brd.board[r][c] == brd.board[r][c+1]? r + 1 : 0);
+						score -= (c + 1 < BreakthroughState.N
+								&& brd.board[r][c] == brd.board[r][c + 1] ? r + 1
+								: 0);
 						score -= ((BreakthroughState.N - r) * (BreakthroughState.N - r));
 					}
-					// gives more points when sticking together. takes points away if opponent is sticking together
-					//if(r > 1 && r < BreakthroughState.N-2){
-						//score += (c+1 < BreakthroughState.N && brd.board[r][c] == who && brd.board[r][c] == brd.board[r][c+1]? r + 1: 0);
- 
-//						score -= (c+1 < BreakthroughState.N && brd.board[r][c] == opp && brd.board[r][c] == brd.board[r][c+1]? r + 1 : 0);
-					//}
 
 				} else if (brd.board[r][c] == BreakthroughState.awaySym) {
 					if (who == BreakthroughState.homeSym) {
 						if (r == 0)
 							score -= 1000;
-						else if(r == 1)
-							score -= 10;
-						score -= (c+1 < BreakthroughState.N && brd.board[r][c] == brd.board[r][c+1]? BreakthroughState.N-r : 0);
+						else if (r == 1)
+							score -= 5;
+						score -= (c + 1 < BreakthroughState.N
+								&& brd.board[r][c] == brd.board[r][c + 1] ? BreakthroughState.N
+								- r
+								: 0);
 						score -= ((r + 1) * (r + 1));
-						
+
 					} else {
 						if (r == 0)
-							score += 10000;
-						else if(r==1)
-							score += 10;
-						score += (c+1 < BreakthroughState.N && brd.board[r][c] == brd.board[r][c+1]? BreakthroughState.N-r : 0);
-						//score -= (c + 1 < BreakthroughState.N && r + dir < BreakthroughState.N && r + dir >= 0 && brd.board[r+dir][c+1] == opp? BreakthroughState.N-1 : 0);
-						//score -= (c - 1 >= 0 && r + dir < BreakthroughState.N && r + dir >= 0 && brd.board[r+dir][c-1] == opp? BreakthroughState.N-1 : 0);
+							score += 100000;
+						else if (r == 1)
+							score += 5;
+						score += (c + 1 < BreakthroughState.N
+								&& brd.board[r][c] == brd.board[r][c + 1] ? BreakthroughState.N
+								- r
+								: 0);
 						score += ((r + 1) * (r + 1));
 					}
-					// gives more points when sticking together. takes points away if opponent is sticking together
-					//if(r > 1 && r < BreakthroughState.N-2){
-						//score += (c+1 < BreakthroughState.N && brd.board[r][c] == who && brd.board[r][c] == brd.board[r][c+1]? BreakthroughState.N-r : 0);
-						//score -= (c+1 < BreakthroughState.N && brd.board[r][c] == opp && brd.board[r][c] == brd.board[r][c+1]? BreakthroughState.N-r : 0);
-						
-					//}
 				}
-				// gives more points when sticking together. takes points away if opponent is sticking together
-				/*if(r > 1 && r < BreakthroughState.N-2){
-					score += (c+1 < BreakthroughState.N && brd.board[r][c] == who && brd.board[r][c] == brd.board[r][c+1]? 1 : 0);
 
-					score -= (c+1 < BreakthroughState.N && brd.board[r][c] == opp && brd.board[r][c] == brd.board[r][c+1]? 1 : 0);
-				}*/
-				
-			}		
-			
+			}
+
 		}
-
 
 		return score;
 	}
-	
+
 	/**
 	 * The evaluation function
 	 * 
@@ -239,7 +229,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 					mv.endingCol = c;
 					// Give these moves scores so the children can all be
 					// compared
-					
+
 					if (board.moveOK(mv)) {
 						if (mv.endingRow == winRow) {
 							mv.score = 100000;
@@ -272,7 +262,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 						if (mv.endingRow == winRow) {
 							mv.score = 100000;
 						} else {
-							//mv.score = evalBoard(board);
+							// mv.score = evalBoard(board);
 							mv.score += state.who == GameState.Who.HOME ? (mv.endingRow + 1)
 									: (BreakthroughState.N - mv.endingRow);
 						}
