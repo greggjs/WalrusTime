@@ -47,7 +47,8 @@ public class TheViolatorDominatrix extends TheViolatorAlphaBetaPlayer{
 	
 	public GameMove getMove(GameState brd, String lastMove)
 	{ 
-		
+		BreakthroughState board = (BreakthroughState) brd;
+        BreakthroughMove trial = this.hasWinningState(board);
 		Opening open = new Opening((BreakthroughState)brd, numMoves);
 		if (open.isBeginning()) {
 			BreakthroughMove openMove = open.openingMove();
@@ -58,47 +59,26 @@ public class TheViolatorDominatrix extends TheViolatorAlphaBetaPlayer{
 				 Double.POSITIVE_INFINITY);
 		System.out.println(stack[0].score);
 		return stack[0];
-		/*ArrayList<ScoredBreakthroughMove> allMv = getPossibleMoves(brd);
-		Collections.shuffle(allMv);
-		BreakthroughState preState;
-		ScoredBreakthroughMove curr = new ScoredBreakthroughMove(
-				0, 0, 0, 0, 0);
-		ArrayList<Thread> tList = new ArrayList<Thread>();
 		
-		for (int i = 0; i < 4/*allMv.size()*//*; i++) {
-			curr = allMv.get(i); // moveOK(curr) is always true
-			preState = (BreakthroughState)brd.clone();
-			// Make move on board
-			brd.makeMove(curr);
-			Dominatrix dom = new Dominatrix(nickname, 7, (BreakthroughState)brd);
-			Thread t = new Thread(dom);
-			t.start();
-			tList.add(t);
-			brd = preState;
-		}
-		tId = 0;
-		for (Thread t : tList) {
-			try {
-				t.join();
-			} catch (InterruptedException err) {}
-		}
-		//numMoves++;
-		
-		ArrayList<Double> dList = new ArrayList<Double>();
-		for (int i = 0; i < 4/*allMv.size()*//*; i++)
-			dList.add(sharedStack[i].score);
-		Double best;
-		if (brd.getWho()==GameState.Who.HOME)
-			best = Collections.max(dList);
-		else
-			best = Collections.min(dList);
-		int bestMoveIndex = dList.indexOf(best);
-		System.out.println(best)*/
-		//init();
-		//return allMv.get(bestMoveIndex);
-
 	}
 	
+	private BreakthroughMove hasWinningState(BreakthroughState board) {
+        char ours = board.who == GameState.Who.HOME ? BreakthroughState.homeSym : BreakthroughState.awaySym;
+        int row = board.who == GameState.Who.HOME ? BreakthroughState.N - 2 : 1;
+        int dir = board.who == GameState.Who.HOME ? 1 : -1;
+        for (int col = 0; col < BreakthroughState.N; col++) {
+                if (board.board[row][col] == ours) {
+                        if (col > 0) {
+                                return new BreakthroughMove(row, col, row + dir, col - 1);
+                        }
+                        else {
+                                return new BreakthroughMove(row, col, row + dir, col + 1);
+                        }
+                }
+        }
+        
+        return null;
+}
 	public void init() {
 		numMoves = 0;
 		depthLimit = 7;
