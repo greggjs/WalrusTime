@@ -1,26 +1,15 @@
 package theviolator;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-
 import java.util.Scanner;
-
-import theviolator.TheViolatorMiniMaxPlayer.ScoredBreakthroughMove;
-
-//import theviolator.TheViolatorMiniMaxPlayer.ScoredBreakthroughMove;
 
 import breakthrough.*;
 import game.*;
 
 public class TheViolatorDominatrix extends TheViolatorAlphaBetaPlayer {
-	private static int NUM_THREADS = 4;
-	private static int tId = 0;
 	private static String nickname = "The Violator Dominatrix";
 	private int numMoves;
 	public boolean doesOpen, doesClose;
-	protected static ScoredBreakthroughMove[] sharedStack = new ScoredBreakthroughMove[30];
 
 	public TheViolatorDominatrix(String nickname, int depthLimit) {
 		super(nickname, depthLimit);
@@ -77,8 +66,6 @@ public class TheViolatorDominatrix extends TheViolatorAlphaBetaPlayer {
 		stack = new ScoredBreakthroughMove[MAX_DEPTH];
 		for (int i = 0; i < MAX_DEPTH; i++)
 			stack[i] = new ScoredBreakthroughMove(0, 0, 0, 0, 0);
-		for (int i = 0; i < NUM_THREADS; i++)
-			sharedStack[i] = new ScoredBreakthroughMove(0, 0, 0, 0, 0);
 	}
 
 	public static char[] toChars(String x) {
@@ -92,11 +79,12 @@ public class TheViolatorDominatrix extends TheViolatorAlphaBetaPlayer {
 		int depth;
 		boolean open, close;
 		try {
-			Scanner scan = new Scanner("params.txt");
+			Scanner scan = new Scanner(new File("theviolator/params.txt"));
 			depth = scan.nextInt();
 			open = scan.nextInt() == 1 ? true : false;
 			close = scan.nextInt() == 1 ? true : false;
 		} catch (Exception err) {
+			System.out.println("Error reading params. Loading default ones.");
 			depth = 7;
 			open = true;
 			close = true;
