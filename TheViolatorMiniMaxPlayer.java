@@ -81,8 +81,9 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	 */
 	public void init() {
 		stack = new ScoredBreakthroughMove[MAX_DEPTH];
-		for (int i = 0; i < MAX_DEPTH; i++)
+		for (int i = 0; i < MAX_DEPTH; i++) {
 			stack[i] = new ScoredBreakthroughMove(0, 0, 0, 0, 0);
+		}
 	}
 
 	/**
@@ -125,125 +126,110 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	 */
 	private static int eval(BreakthroughState brd, char who) {
 		int score = 0;
-		char opp = (who == BreakthroughState.homeSym? BreakthroughState.awaySym : BreakthroughState.homeSym);
-		for (int r = 0; r < BreakthroughState.N; r++) {
-			for (int c = 0; c < BreakthroughState.N; c++) {
-				// If the board piece is a home piece
-				if (brd.board[r][c] == BreakthroughState.homeSym) {
-					// we are home player
-					if (who == BreakthroughState.homeSym) {
-						// we have won
+		char opp = (who == BreakthroughState.homeSym ? BreakthroughState.awaySym
+				: BreakthroughState.homeSym);
+		for (int r = 0; r < BreakthroughState.N; ++r) {
+			for (int c = 0; c < BreakthroughState.N; ++c) {
+				char currPiece = brd.board[r][c];
+				// If we are the home team
+				if (who == BreakthroughState.homeSym) {
+					// if the board piece is ours
+					if (currPiece == who) {
+						// We win
 						if (r == BreakthroughState.N - 1)
-							return 100000;
-						// we are about to win
+							score += 100000;
+						// We are about to win
 						else if (r == BreakthroughState.N - 2)
-							score += 7;
-						// reward for having multiple pieces grouped together
+							score += 10;
+						// We have clustered pieces
 						score += (c + 1 < BreakthroughState.N
-								&& brd.board[r][c] == brd.board[r][c + 1] ? (r + 1)*(r+1)
+								&& brd.board[r][c + 1] == who ? (r + 1) 
+								: 0);
+						score += (r + 1 < BreakthroughState.N
+								&& brd.board[r+1][c] == who ? (r + 1) 
 								: 0);
 						
-						// penalty for opponents diagonally ahead
-						score -= (c+1 < BreakthroughState.N && r+1 < BreakthroughState.N && brd.board[r+1][c+1] == opp? .1 : -.1);
-						score -= (c-1 >= 0 && r+1 < BreakthroughState.N && brd.board[r+1][c-1] == opp? .1 : -.1);
-						
-						// reward for closer the piece is to a win
-						score += ((BreakthroughState.N - r) * (BreakthroughState.N - r));
-					}
-					// if we are away
-					else {
-						// if they're goina to win
-						if (r == BreakthroughState.N - 1)
-							return - 10000;
-						// if they're about to win
-						else if (r == BreakthroughState.N - 2)
-							score -= 10;
-						// penalty for them havin group clusters
+						// An opponent is diagonally ahead
 						score -= (c + 1 < BreakthroughState.N
-								&& brd.board[r][c] == brd.board[r][c + 1] ? (r + 1)*(r+1)
+								&& r + 1 < BreakthroughState.N
+								&& brd.board[r + 1][c + 1] == opp ? .1 : 0 );
+						score -= (c - 1 >= 0 && r + 1 < BreakthroughState.N
+								&& brd.board[r + 1][c - 1] == opp ? .1 : 0 );
+
+						// We are getting closer to a win
+						score += ((r + 1 ) * (r + 1));
+					}
+					// if the board piece is theirs
+					else if (currPiece == opp) {
+						// We lose
+						if (r == 0)
+							score -= 1000;
+						// We are about to lose
+						else if (r == 1)
+							score -= 10;
+						// They have clustered pieces
+						score -= (c + 1 < BreakthroughState.N
+								&&  brd.board[r][c + 1] == opp ? (BreakthroughState.N - r) 
 								: 0);
-						
-						// penalty for them getting close to a win
+						// They are getting closer to a win
 						score -= ((BreakthroughState.N - r) * (BreakthroughState.N - r));
 					}
-				// if the piece is an away symbol...
-				} else if (brd.board[r][c] == BreakthroughState.awaySym) {
-					// if we are away
-					if (who == BreakthroughState.awaySym) {
-						// we win
+					// if there is no board piece here
+					else {
+						score -= (r == 0 && c % 2 == 1? .025 : 0);
+						score -= (r == 0 && c % 2 == 0? .005 : 0);
+					
+					}
+				}
+				// If we are the away team
+				else {
+					// if the board piece is ours
+					if (currPiece == who) {
+						// We win
 						if (r == 0)
 							return 100000;
-						// we're about to win
+						// We are about to win
 						else if (r == 1)
-							score += 7;
-						
-						// reward for clusters
+							score += 10;
+						// We have clustered pieces
 						score += (c + 1 < BreakthroughState.N
-								&& brd.board[r][c] == brd.board[r][c + 1] ? (BreakthroughState.N- r)* (BreakthroughState.N- r)
+								&& brd.board[r][c + 1] == who? (BreakthroughState.N - r) 
 								: 0);
-						
-						
-						
-						
-						// penalty for opponents diagonally ahead
-						score -= (c+1 < BreakthroughState.N && r >= 0 && brd.board[r-1][c+1] == opp? .1 : -.1);
-						score -= (c-1 >= 0 && r>=0 && brd.board[r-1][c-1] == opp? .1 : -.1);
-						
-						
-						// reward for moving closer to win
-						score += ((r + 1) * (r + 1));
+						score += (r - 1 >= 0
+								&& brd.board[r-1][c] == who? (BreakthroughState.N - r) 
+								: 0);
+						// An opponent is diagonally ahead
+						score -= (c + 1 < BreakthroughState.N && r >= 0
+								&& brd.board[r - 1][c + 1] == opp ? .1 : 0 );
+						score -= (c - 1 >= 0 && r >= 0
+								&& brd.board[r - 1][c - 1] == opp ? .1 : 0 );
+						// We are getting closer to a win
+						score += ((BreakthroughState.N - r) * (BreakthroughState.N - r));
 					}
-					else {
-						// if they win
-						if (r == 0)
-							return - 10000;
-						// if they're about to win
-						else if (r == 1)
+					// if the board piece is theirs
+					else if (currPiece == opp) {
+						// We lose
+						if (r == BreakthroughState.N - 1)
+							score -= 1000;
+						// We are about to lose
+						else if (r == BreakthroughState.N - 2)
 							score -= 10;
-						// penalty for group clusters
+						// They have clustered pieces
 						score -= (c + 1 < BreakthroughState.N
-								&& brd.board[r][c] == brd.board[r][c + 1] ? (BreakthroughState.N- r)* (BreakthroughState.N- r)
+								&& brd.board[r][c + 1] == opp ? (r + 1) 
 								: 0);
-						// penalty for them getting close to a win
-						score -= ((r + 1) * (r + 1));
-					} 
-				}
-				// for empty symbols...
-				else {
-					if (who == BreakthroughState.homeSym) {
-						if (r == 0) {
-							score -= (c + 1 < BreakthroughState.N
-									&& brd.board[r][c] == brd.board[r][c + 1] ? .05
-									: 0);
-							score -= (c % 2 == 1 ? .025 : 0);
-						}
-						if (r == 1) {
-							score -= (c + 1 < BreakthroughState.N
-									&& brd.board[r][c] == brd.board[r][c + 1] ? .025
-									: 0);
-						}
-						
-
+	
+						// They are getting closer to a win
+						score -= ((r + 1) * (r + 1)) ;
 					}
+					// if there is no board piece here
 					else {
-						if (r == BreakthroughState.N-1) {
-							score -= (c + 1 < BreakthroughState.N
-									&& brd.board[r][c] == brd.board[r][c + 1] ? .05
-									: 0);
-							score -= (c % 2 == 1 ? .025 : 0);
-						}
-						if (r == BreakthroughState.N-2) {
-							score -= (c + 1 < BreakthroughState.N
-									&& brd.board[r][c] == brd.board[r][c + 1] ? .025
-									: 0);
-						}
+						score -= (r == BreakthroughState.N - 1 && c % 2 == 1? .025 : 0);
+						score -= (r == BreakthroughState.N - 1 && c % 2 == 0? .005 : 0);
 					}
 				}
-
 			}
-
 		}
-
 		return score;
 	}
 
@@ -257,10 +243,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	protected static int evalBoard(BreakthroughState state) {
 		int score = eval(state, BreakthroughState.homeSym)
 				- eval(state, BreakthroughState.awaySym);
-		if (Math.abs(score) > MAX_SCORE) {
-			System.err.println("Problem with eval");
-			System.exit(0);
-		}
+
 		return score;
 	}
 
@@ -324,7 +307,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 						if (mv.endingRow == winRow) {
 							mv.score = 100000;
 						} else {
-							 mv.score = evalBoard(board);
+							mv.score = evalBoard(board);
 							mv.score += state.who == GameState.Who.HOME ? (mv.endingRow + 1)
 									: (BreakthroughState.N - mv.endingRow);
 						}
