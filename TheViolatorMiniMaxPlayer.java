@@ -144,8 +144,8 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 								: 0);
 						
 						// penalty for opponents diagonally ahead
-						score -= (c+1 < BreakthroughState.N && r+1 < BreakthroughState.N && brd.board[r+1][c+1] == opp? .1 : -.1);
-						score -= (c-1 >= 0 && r+1 < BreakthroughState.N && brd.board[r+1][c-1] == opp? .1 : -.1);
+						//score -= (c+1 < BreakthroughState.N && r+1 < BreakthroughState.N && brd.board[r+1][c+1] == opp? .1 : -.1);
+						//score -= (c-1 >= 0 && r+1 < BreakthroughState.N && brd.board[r+1][c-1] == opp? .1 : -.1);
 						
 						// reward for closer the piece is to a win
 						score += ((BreakthroughState.N - r) * (BreakthroughState.N - r));
@@ -175,16 +175,19 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 							return 100000;
 						// we're about to win
 						else if (r == 1)
-							score += 5;
+							score += 7;
 						
 						// reward for clusters
 						score += (c + 1 < BreakthroughState.N
 								&& brd.board[r][c] == brd.board[r][c + 1] ? (BreakthroughState.N- r)* (BreakthroughState.N- r)
 								: 0);
 						
+						
+						
+						
 						// penalty for opponents diagonally ahead
-						score -= (c+1 < BreakthroughState.N && r >= 0 && brd.board[r-1][c+1] == opp? .1 : -.1);
-						score -= (c-1 >= 0 && r>=0 && brd.board[r-1][c-1] == opp? .1 : -.1);
+						//score -= (c+1 < BreakthroughState.N && r >= 0 && brd.board[r-1][c+1] == opp? .1 : -.1);
+						//score -= (c-1 >= 0 && r>=0 && brd.board[r-1][c-1] == opp? .1 : -.1);
 						
 						
 						// reward for moving closer to win
@@ -196,7 +199,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 							return - 1000;
 						// if they're about to win
 						else if (r == 1)
-							score -= 7;
+							score -= 10;
 						// penalty for group clusters
 						score -= (c + 1 < BreakthroughState.N
 								&& brd.board[r][c] == brd.board[r][c + 1] ? (BreakthroughState.N- r)* (BreakthroughState.N- r)
@@ -212,12 +215,14 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 							score -= (c + 1 < BreakthroughState.N
 									&& brd.board[r][c] == brd.board[r][c + 1] ? .05
 									: 0);
+							score -= (c % 2 == 1 ? .025 : 0);
 						}
 						/*if (r == 1) {
 							score -= (c + 1 < BreakthroughState.N
 									&& brd.board[r][c] == brd.board[r][c + 1] ? .025
 									: 0);
 						}*/
+						
 
 					}
 					else {
@@ -225,6 +230,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 							score -= (c + 1 < BreakthroughState.N
 									&& brd.board[r][c] == brd.board[r][c + 1] ? .05
 									: 0);
+							score -= (c % 2 == 1 ? .025 : 0);
 						}
 						/*if (r == BreakthroughState.N-2) {
 							score -= (c + 1 < BreakthroughState.N
