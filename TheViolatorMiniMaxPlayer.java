@@ -125,6 +125,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 	 */
 	private static int eval(BreakthroughState brd, char who) {
 		int score = 0;
+		char opp = (who == BreakthroughState.homeSym? BreakthroughState.awaySym : BreakthroughState.homeSym);
 		for (int r = 0; r < BreakthroughState.N; r++) {
 			for (int c = 0; c < BreakthroughState.N; c++) {
 				// If the board piece is a home piece
@@ -133,7 +134,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 					if (who == BreakthroughState.homeSym) {
 						// we have won
 						if (r == BreakthroughState.N - 1)
-							score += 100000;
+							return 100000;
 						// we are about to win
 						else if (r == BreakthroughState.N - 2)
 							score += 7;
@@ -142,14 +143,18 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 								&& brd.board[r][c] == brd.board[r][c + 1] ? (r + 1)*(r+1)
 								: 0);
 						
+						// penalty for opponents diagonally ahead
+						score -= (c+1 < BreakthroughState.N && r+1 < BreakthroughState.N && brd.board[r+1][c+1] == opp? .1 : -.1);
+						score -= (c-1 >= 0 && r+1 < BreakthroughState.N && brd.board[r+1][c-1] == opp? .1 : -.1);
+						
 						// reward for closer the piece is to a win
 						score += ((BreakthroughState.N - r) * (BreakthroughState.N - r));
 					}
 					// if we are away
 					else {
-						// if they're gonna win
+						// if they're goina to win
 						if (r == BreakthroughState.N - 1)
-							score -= 1000;
+							return - 1000;
 						// if they're about to win
 						else if (r == BreakthroughState.N - 2)
 							score -= 10;
@@ -157,16 +162,38 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 						score -= (c + 1 < BreakthroughState.N
 								&& brd.board[r][c] == brd.board[r][c + 1] ? (r + 1)*(r+1)
 								: 0);
+						
 						// penalty for them getting close to a win
 						score -= ((BreakthroughState.N - r) * (BreakthroughState.N - r));
 					}
 				// if the piece is an away symbol...
 				} else if (brd.board[r][c] == BreakthroughState.awaySym) {
-					// if we are home
-					if (who == BreakthroughState.homeSym) {
+					// if we are away
+					if (who == BreakthroughState.awaySym) {
+						// we win
+						if (r == 0)
+							return 100000;
+						// we're about to win
+						else if (r == 1)
+							score += 5;
+						
+						// reward for clusters
+						score += (c + 1 < BreakthroughState.N
+								&& brd.board[r][c] == brd.board[r][c + 1] ? (BreakthroughState.N- r)* (BreakthroughState.N- r)
+								: 0);
+						
+						// penalty for opponents diagonally ahead
+						score -= (c+1 < BreakthroughState.N && r >= 0 && brd.board[r-1][c+1] == opp? .1 : -.1);
+						score -= (c-1 >= 0 && r>=0 && brd.board[r-1][c-1] == opp? .1 : -.1);
+						
+						
+						// reward for moving closer to win
+						score += ((r + 1) * (r + 1));
+					}
+					else {
 						// if they win
 						if (r == 0)
-							score -= 1000;
+							return - 1000;
 						// if they're about to win
 						else if (r == 1)
 							score -= 7;
@@ -176,23 +203,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 								: 0);
 						// penalty for them getting close to a win
 						score -= ((r + 1) * (r + 1));
-					// if we are away
-					} else {
-						// we win
-						if (r == 0)
-							score += 100000;
-						// we're about to win
-						else if (r == 1)
-							score += 5;
-						// reward for clusters
-						
-						score += (c + 1 < BreakthroughState.N
-								&& brd.board[r][c] == brd.board[r][c + 1] ? (BreakthroughState.N- r)* (BreakthroughState.N- r)
-								: 0);
-						
-						// reward for moving closer to win
-						score += ((r + 1) * (r + 1));
-					}
+					} 
 				}
 				// for empty symbols...
 				else {
@@ -202,6 +213,11 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 									&& brd.board[r][c] == brd.board[r][c + 1] ? .05
 									: 0);
 						}
+						/*if (r == 1) {
+							score -= (c + 1 < BreakthroughState.N
+									&& brd.board[r][c] == brd.board[r][c + 1] ? .025
+									: 0);
+						}*/
 
 					}
 					else {
@@ -210,6 +226,11 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 									&& brd.board[r][c] == brd.board[r][c + 1] ? .05
 									: 0);
 						}
+						/*if (r == BreakthroughState.N-2) {
+							score -= (c + 1 < BreakthroughState.N
+									&& brd.board[r][c] == brd.board[r][c + 1] ? .025
+									: 0);
+						}*/
 					}
 				}
 
@@ -297,7 +318,7 @@ public class TheViolatorMiniMaxPlayer extends GamePlayer {
 						if (mv.endingRow == winRow) {
 							mv.score = 100000;
 						} else {
-							// mv.score = evalBoard(board);
+							 mv.score = evalBoard(board);
 							mv.score += state.who == GameState.Who.HOME ? (mv.endingRow + 1)
 									: (BreakthroughState.N - mv.endingRow);
 						}
